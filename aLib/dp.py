@@ -707,9 +707,9 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
                             d[FieldName] = np.empty([b[FieldName].shape[0],NumEstPassExtra],
                                 dtype=b[FieldName].dtype)
                         elif fieldDims == 3:
-                            d[fieldName] = \
+                            d[FieldName] = \
                                 np.empty([b[FieldName].shape[0],b[FieldName].shape[1],NumEstPassExtra], \
-                                dtype=b[fieldName].dtype)
+                                dtype=b[FieldName].dtype)
                 # Make cuts
                 if flag_cutsNone:
                     tCutsAll = np.array([True]*len(b['file_number']))

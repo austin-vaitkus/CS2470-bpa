@@ -20,8 +20,7 @@ def get_data(dataset_list, fields):
         # rqBasePath_list.append("/data/rq/{:s}/matfiles/".format(dataset[ii]))
         rqBasePath_list.append("./data/{:s}/matfiles/".format(dataset_list[ii]))
 
-    d = dp.concatRQsWcuts([rqBasePath_list[0]], fields)
+    rq = dp.concatRQsWcuts([rqBasePath_list[0]], fields)
 
-    rq = None
     labels = None
     return rq, labels

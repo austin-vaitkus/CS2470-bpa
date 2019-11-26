@@ -26,13 +26,63 @@ def train(model, data):
 
 def main():
 
-    dataset_list = ["lux10_20160627T0824_cp24454"]
+    # dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
+    dataset_list = ['lux10_20160802T1425']  # Small piece of Kr data
 
-    fields = ["pulse_area_phe", "luxstamp_samples", "pulse_classification",
-              "s1s2_pairing", "z_drift_samples", "cor_x_cm", "cor_y_cm",
-              "top_bottom_ratio", "rms_width_samples", "xyz_corrected_pulse_area_all_phe",
-              "event_timestamp_samples", "file_number"]
-    rqs = get_data(dataset_list, fields)
+    # Generic pulse finding RQs
+    # fields = ["pulse_area_phe", "luxstamp_samples", "pulse_classification",
+    #           "s1s2_pairing", "z_drift_samples", "cor_x_cm", "cor_y_cm",
+    #           "top_bottom_ratio", "rms_width_samples", "xyz_corrected_pulse_area_all_phe",
+    #           "event_timestamp_samples", 'file_number']
+
+    # Decide which RQs to use. 1 for original LPC (1-to-1 comparison) vs 2 for larger list of RQs.
+    RQ_list_switch = 2
+    if RQ_list_switch == 1:
+        #Below: RQs used by the standard LUX Pulse Classifier
+        fields = ['pulse_area_phe',  # OG LPC
+                    'luxstamp_samples',  # OG LPC
+                    's2filter_max_area_diff',  # OG LPC
+                    'prompt_fraction_tlx',  # OG LPC
+                    'top_bottom_asymmetry',  # OG LPC
+                    'aft_t0_samples',  # OG LPC
+                    'aft_t1_samples',  # OG LPC
+                    'aft_t2_samples',  # OG LPC
+                    'peak_height_phe_per_sample',  # OG LPC
+                    'skinny_peak_area_phe',  # OG LPC
+                    'prompt_fraction',  # OG LPC
+                    'pulse_height_phe_per_sample',  # OG LPC
+                    'file_number',  # OG LPC
+                    'pulse_classification']
+    elif RQ_list_switch == 2:
+        # RQs used by the standard LUX Pulse Classifier + Additional ones for better performance
+        fields = ['pulse_area_phe',  # OG LPC
+                  'luxstamp_samples',  # OG LPC
+                  's2filter_max_area_diff',  # OG LPC
+                  'prompt_fraction_tlx',  # OG LPC
+                  'top_bottom_asymmetry',  # OG LPC
+                  'aft_t0_samples',  # OG LPC
+                  'aft_t1_samples',  # OG LPC
+                  'aft_t2_samples',  # OG LPC
+                  'peak_height_phe_per_sample',  # OG LPC
+                  'skinny_peak_area_phe',  # OG LPC
+                  'prompt_fraction',  # OG LPC
+                  'pulse_height_phe_per_sample',  # OG LPC
+                  'file_number',  # OG LPC
+                  'pulse_classification']
+                    #  ADD MORE RQs HERE
+
+    rq = get_data(dataset_list, fields)
+    print('All RQs loaded!')
+
+    pulse_classification = rq[0].pulse_classification
+    num_S1s = np.sum(pulse_classification==1,axis=0)
+    num_S2s = np.sum(pulse_classification==2,axis=0)
+    num_sphe = np.sum(pulse_classification==3, axis=0)
+    num_se = np.sum(pulse_classification==4, axis=0)
+    print('[end file]')
+
+
+
 
 
 if __name__ == '__main__':
