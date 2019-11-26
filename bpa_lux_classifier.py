@@ -26,11 +26,13 @@ def train(model, data):
 
 def main():
 
-    dataset = ["lux10_20160627T0824_cp24454"]
-    rq_list = []
-    data_path = '/data/'
-    file_path = data_path + dataset
-    rqs = get_data(file_path, rq_list)
+    dataset_list = ["lux10_20160627T0824_cp24454"]
+
+    fields = ["pulse_area_phe", "luxstamp_samples", "pulse_classification",
+              "s1s2_pairing", "z_drift_samples", "cor_x_cm", "cor_y_cm",
+              "top_bottom_ratio", "rms_width_samples", "xyz_corrected_pulse_area_all_phe",
+              "event_timestamp_samples", "file_number"]
+    rqs = get_data(dataset_list, fields)
 
 
 if __name__ == '__main__':

@@ -94,9 +94,9 @@ def stairs(x, y, *args, **kwargs):
     if type(tH) == list:
         tH = tH[0]
     h.append(tH)
-    if (hatch is not None) or (facecolor != 'none') or (hatchcolor is not None):
+    if (hatch != None) or (facecolor != 'none') or (hatchcolor != None):
         ymin, ymax = mpl.pyplot.ylim()
-        if hatchcolor is None:
+        if hatchcolor == None:
             hatchcolor = tH.get_color()
         tH = mpl.pyplot.fill_between(xx, 
                                      yy,
@@ -175,9 +175,9 @@ def lstairs(x, y, *args, **kwargs):
     if type(tH) == list:
         tH = tH[0]
     h.append(tH)
-    if (hatch is not None) or (facecolor != 'none') or (hatchcolor is not None):
+    if (hatch != None) or (facecolor != 'none') or (hatchcolor != None):
         ymin, ymax = mpl.pyplot.ylim()
-        if hatchcolor is None:
+        if hatchcolor == None:
             hatchcolor = tH.get_color()
         tH = mpl.pyplot.fill_between(xx,
                                      nn,
@@ -215,18 +215,12 @@ def gcfn():
     No Inputs.
     
     2014.03.12 -- A. Manalaysay
-    2014.12.11 -- A. Manalaysay - Simplified the code; it no longer needs to go through and 
-                  update all open figures just to return the number of the current figure.
     """
-    return mpl.pyplot.gcf().number
-
-def fup():
-    """
-    Try to update the current figure.  No inputs.
-    
-    2014.12.11 -- A. Manalaysay
-    """
-    mpl.pyplot.figure(gcfn())
+    currentFig = mpl.pyplot.gcf()
+    for k in mpl.pyplot.get_fignums():
+        mpl.pyplot.figure(k)
+        if mpl.pyplot.gcf() == currentFig:
+            return k
 
 def plot2d(x, y, x_range=None, y_range=None, x_bins=50, y_bins=50, flag_log=False, flag_mask=True, cmap=None):
     """
@@ -271,13 +265,13 @@ def plot2d(x, y, x_range=None, y_range=None, x_bins=50, y_bins=50, flag_log=Fals
     """
     
     #**** <INPUT HANDLING> ****#
-    if cmap is None:
+    if cmap==None:
         cmap = mpl.cm.jet
-    if (type(cmap) != type(mpl.cm.jet)) and (type(cmap) != type(mpl.cm.plasma)):
+    if type(cmap) != type(mpl.cm.jet):
         raise TypeError("Input cmap must be a matplotlib color map object.")
-    if x_range is None:
+    if x_range==None:
         x_range = [x.min(), x.max()]
-    if y_range is None:
+    if y_range==None:
         y_range = [y.min(), y.max()]
     if (x_range[1]-x_range[0])<0:
         x_range = x_range[::-1]
@@ -316,26 +310,23 @@ def plot2d(x, y, x_range=None, y_range=None, x_bins=50, y_bins=50, flag_log=Fals
     if flag_log and (not flag_mask):
         cMax = h.get_clim()[1]
         h.set_clim((.8,cMax))
-    fup()
+    gcfn()
     return h
 
-def plot2d_old(x, y, x_range=None, y_range=None, x_bins=50, y_bins=50, flag_log=False, 
-    cmap=None, alpha=1., boxedgewidth=0.1):
+def plot2d_old(x, y, x_range=None, y_range=None, x_bins=50, y_bins=50, flag_log=False, cmap=None):
     """
     Use plot2d instead; this is the old version and kept here only for legacy purposes, and as a
     useful reference for how to work with Collections classes.
-    
-    Update(2014.07.19) Ok ok, this is still useful if you want transparent bins. Woohoo.
     """
     
     #**** <INPUT HANDLING> ****#
-    if cmap is None:
+    if cmap==None:
         cmap = mpl.cm.jet
-    if (type(cmap) != type(mpl.cm.jet)) and (type(cmap) != type(mpl.cm.plasma)):
+    if type(cmap) != type(mpl.cm.jet):
         raise TypeError("Input cmap must be a matplotlib color map object.")
-    if x_range is None:
+    if x_range==None:
         x_range = [x.min(), x.max()]
-    if y_range is None:
+    if y_range==None:
         y_range = [y.min(), y.max()]
     if (x_range[1]-x_range[0])<0:
         x_range = x_range[::-1]
@@ -368,15 +359,15 @@ def plot2d_old(x, y, x_range=None, y_range=None, x_bins=50, y_bins=50, flag_log=
         n_Norm = mpl.colors.Normalize(vmin=n_min, vmax=n_max)
     
     # Create a PatchCollection from the list of patches and set the histogram as its data
-    p = mpl.collections.PatchCollection(patches, cmap=cmap, norm=n_Norm, alpha=alpha,
-                                        edgecolor="face",linewidth=boxedgewidth)
+    p = mpl.collections.PatchCollection(patches, cmap=cmap, norm=n_Norm, alpha=1,edgecolor="face",linewidth=0.1)
     p.set_array(n_fl)
     
     # Put the PatchCollection into the current axis, set the axis limits.
     mpl.pyplot.gca().add_collection(p)
     mpl.pyplot.axis([x_range[0],x_range[1],y_range[0],y_range[1]])
     
-    fup()
+    gcfn()
+    
     return p
 
 def getchildren(ax=None):
@@ -395,7 +386,7 @@ def getchildren(ax=None):
     if ax == None:
         ax = mpl.pyplot.gca()
     
-    hh = [h for h in ax.get_children() if h._remove_method is not None]
+    hh = [h for h in ax.get_children() if h._remove_method != None]
     
     return hh
 
@@ -421,7 +412,7 @@ def deletelastchild():
     if len(hh)>0:
         hh[-1].remove()
     
-    fup()
+    gcfn()
 
 def mfindobj(obj, **kwargs):
     """
@@ -467,7 +458,7 @@ def eff(cut):
     """
     if type(cut)==np.ndarray:
         if cut.dtype == bool:
-            effic = np.float(cut.sum())/len(cut)
+            effic = cut.sum()/len(cut)
         else:
             effic = (cut!=0).sum()/len(cut)
     else:
@@ -556,16 +547,10 @@ def leg(*args, **kwargs):
     #------</INPUT HANDLING>------#
     
     hh = getchildren() # function above from this module
-    # construct handlermap dictionary
-    hMap = {}
-    for h in hh:
-        hMap[h] = mpl.legend_handler.HandlerLine2D(numpoints=1)
     if len(args)==0:
-        h_L = mpl.pyplot.legend(hh,["{:d}".format(k) for k in range(len(hh))],
-              handler_map=hMap,**kwargs)
+        h_L = mpl.pyplot.legend(hh,["{:d}".format(k) for k in range(len(hh))],**kwargs)
     else:
-        h_L = mpl.pyplot.legend([hh[k] for k in args[0]],args[1:],
-              handler_map=hMap,**kwargs)
+        h_L = mpl.pyplot.legend([hh[k] for k in args[0]],args[1:],**kwargs)
     return h_L
 
 def legloc(legPos, ax=None, legHandle=None):
@@ -628,16 +613,15 @@ def legloc(legPos, ax=None, legHandle=None):
     else:
         raise ValueError("I don't recognize your legend location input.")
     
-    if ax is None:
+    if ax == None:
         ax = mpl.pyplot.gca()
-    if legHandle is None:
+    if legHandle == None:
         legHandle = ax.get_legend()
     
     legHandle._set_loc(legPosNum)
-    fup()
+    gcfn()
     return legHandle
 
-import types
 def getFuns(modName):
     """
     Return a list of the names of functions contained in a module.
@@ -648,6 +632,7 @@ def getFuns(modName):
       
     2014.03.24 -- A. Manalaysay
     """
+    import types
     funList = [modName.__dict__.get(a).__name__ for a in dir(modName) \
         if isinstance(modName.__dict__.get(a), types.FunctionType)]
     return funList
@@ -696,13 +681,13 @@ def cbarmticks(cbar=None, ax=None, side='both'):
                                    sides of the colorbar (not just the right side as is done by 
                                    default by matplotlib).
     """
-    if ax is None:
+    if ax == None:
         ax = mpl.pyplot.gca()
-    if cbar is None:
-        objWcbarNoNone = [hh for hh in getchildren(ax) if hasattr(hh,'colorbar') and (hh.colorbar is not None)]
+    if cbar == None:
+        objWcbarNoNone = [hh for hh in getchildren(ax) if hasattr(hh,'colorbar') and (hh.colorbar!=None)]
         if len(objWcbarNoNone) != 0:
             cbar = objWcbarNoNone[0].colorbar
-    if cbar is None:
+    if cbar == None:
         raise ValueError('No colorbar found')
     
     if type(cbar.norm) == mpl.colors.LogNorm:
@@ -727,7 +712,7 @@ def cbarmticks(cbar=None, ax=None, side='both'):
     #controlled by kwarg 'side'.
     cbar.ax.yaxis.set_ticks_position(side)
     
-    fup()
+    gcfn()
     return cbar
 
 def cbarylabel(string, ax=None, cbar=None, **kwargs):
@@ -754,7 +739,7 @@ def cbarylabel(string, ax=None, cbar=None, **kwargs):
     # This line makes the colorbar look nice when viewed in OS X Preview, for Apple users.
     cbar.solids.set_edgecolor('face')
     
-    fup()
+    gcfn()
     return cbar
 
 def ticksdbl(ax=None, which='x'):
@@ -781,7 +766,8 @@ def ticksdbl(ax=None, which='x'):
     
     tickSpacing = np.diff(axHandle.get_ticklocs()[:2])[0]
     axHandle.set_major_locator(mpl.ticker.MultipleLocator(.5*tickSpacing))
-    fup()
+    gcfn()
+
 
 def ticksauto(ax=None, which='b'):
     """
@@ -809,105 +795,12 @@ def ticksauto(ax=None, which='b'):
         raise ValueError("Input 'which' must be either 'x' or 'y'.")
     for hax in axHandle:
         hax.set_major_locator(mpl.ticker.AutoLocator())
-    fup()
+    gcfn()
 
-def tickxm(mult, ax=None):
-    """
-    Set the multiple to be used as the major tick mark on the x-axis.
-    
-    Inputs:
-         mult: Within the range of the horizontal axis, a tick mark will be placed at every 
-               multiple of the number given as 'mult'.  E.g. if mult=2 and the range is [-5,7], 
-               then tick marks will be placed at -4, -2, 0, 2, 4, 6.  Mult need not be an 
-               integer.
-           ax: (Optional) Handle to the axes which are to be modified.  If left blank, the axes 
-               returned by gca() are used.
-    Outputs: (none)
-    
-    2014.09.30 -- A. Manalaysay
-    """
-    if ax is None:
-        ax = mpl.pyplot.gca()
-    ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(mult))
-    figNumber = ax.get_figure().number
-    mpl.pyplot.figure(figNumber)
 
-def tickym(mult, ax=None):
-    """
-    Set the multiple to be used as the major tick mark on the y-axis.
-    
-    Inputs:
-         mult: Within the range of the vertical axis, a tick mark will be placed at every 
-               multiple of the number given as 'mult'.  E.g. if mult=2 and the range is [-5,7], 
-               then tick marks will be placed at -4, -2, 0, 2, 4, 6.  Mult need not be an 
-               integer.
-           ax: (Optional) Handle to the axes which are to be modified.  If left blank, the axes 
-               returned by gca() are used.
-    Outputs: (none)
-    
-    2014.09.30 -- A. Manalaysay
-    """
-    if ax is None:
-        ax = mpl.pyplot.gca()
-    ax.yaxis.set_major_locator(mpl.ticker.MultipleLocator(mult))
-    figNumber = ax.get_figure().number
-    mpl.pyplot.figure(figNumber)
 
-def figlike(fnumSource, fnumTarget=None):
-    """
-    Create a figure with the same dimensions as another figure.
-    Inputs:
-        fnumSource: The number of the figure which to copy.
-        fnumTarget: Optional. If none is supplied, it uses the default next-in-the-sequence like
-                    the 'figure' function normally does.
-    Outputs:
-           fHandle: The handle to the created figure.
-    
-    2014.12.12 -- A. Manalaysay
-    """
-    hSource = mpl.pyplot.figure(fnumSource)
-    fHeight = hSource.get_figheight()
-    fWidth = hSource.get_figwidth()
-    
-    fHandle = mpl.pyplot.figure(fnumTarget,figsize=[fWidth,fHeight])
-    return fHandle
 
-from __main__ import __dict__ as mainGlobals
-def getSameVars(obj, us=True):
-    """
-    Find other variable names in the user workspace that point to the same object in memory
-    as the one given.  Returns a list of strings, each one a name of a variable that points to
-    the address in memory where input 'obj' is located.
-    Inputs:
-          obj: Object to look for.
-           us: (kw, Optional): Short for "underscore", this is a boolean kwarg; when true, the 
-               output list includes items whose variable name starts with an underscore ('_').
-               If false, these underscore-prefixed variables names are filtered out. 
-               Default: True
-    Outputs:
-       vNames: List of strings representing the variable names that point to the same mem 
-               address as in put obj.
-    
-    2014.12.28 -- A. Manalaysay
-    """
-    vNames = []
-    glKeys = mainGlobals.keys()
-    for n in glKeys:
-        if id(mainGlobals[n])==id(obj):
-            vNames.append(n)
-    assert type(us)==bool, "Input 'us' must be a boolean."
-    if not us:
-        vNames = [v for v in vNames if v[0]!='_']
-    return vNames
 
-def points2eq(x1,y1,x2,y2):
-    """
-    Gives the slope and y-intercept of the line defined by the input points.
-    Output: (slope, y-intercept)
-    
-    2016.05.27 -- A. Manalaysay
-    """
-    m = (y2-y1)/(x2-x1)
-    b = y1 - m*x1 
-    return m,b
+
+
 

@@ -9,15 +9,33 @@ I will try to give an indication below when a modification has occured.
 2014.03.27 (updated)
 2014.03.28 (updated)
 2014.04.10 (updated)
-2014.07.07 (updated)
 """
 
-from __future__ import division
-from __future__ import print_function
 
 import sys
 pyVersion = sys.version_info.major
 del sys
+
+import numpy as np
+import matplotlib as mpl
+if pyVersion == 3:
+    from aLib import mfile
+    #from aLib import hdf
+    from aLib import dp
+    from aLib import fits
+    from aLib.misc import *
+else:
+    import mfile
+    import dp
+    import fits
+    from misc import *
+
+
+# PLEASE NOTE: The above import loads all functions of aLib.misc into the current work space.
+#              This is simply the way I like it, but if you don't like that behavior, please 
+#              just let me know and we can figure out a better solution... maybe a conditional
+#              behavior based on the username or something would be cleanest way to satisfy
+#              everyone.  -Aaron
 
 class S(dict):
     """
@@ -54,10 +72,10 @@ class S(dict):
     d          S       Dictionary with 3 fields
     
     Example:
-    In [1]: d_stand = {'x':3, 'y':27} # (a standard python dict)
-    In [2]: d_stand
+    In [1]: d_bag = {'x':3, 'y':27} # (a standard python dict)
+    In [2]: d_bag
     Out[2]: {'x':3, 'y':27}
-    In [3]: d_nice = S(d_stand)
+    In [3]: d_nice = S(d_bag)
     In [4]: d_nice
     Out[4]:
     Dictionary contents:
@@ -161,33 +179,3 @@ class S(dict):
         else:
             summaryString = "No fields defined yet."
         return summaryString
-
-
-
-import numpy as np
-import matplotlib as mpl
-if pyVersion == 3:
-    from aLib import mfile
-    from aLib import dp
-    from aLib import fits
-    from aLib.misc import *
-    from aLib import astats
-    from aLib import rates
-    from aLib import pyNEST as pn
-    from aLib import mathops as mo
-else:
-    #from __future__ import division
-    import mfile
-    import dp
-    import fits
-    from misc import *
-    import astats
-    import rates
-    import pyNEST as pn
-    import mathops as mo
-
-# PLEASE NOTE: The above import loads all functions of aLib.misc into the current work space.
-#              This is simply the way I like it, but if you don't like that behavior, please 
-#              just let me know and we can figure out a better solution... maybe a conditional
-#              behavior based on the username or something would be cleanest way to satisfy
-#              everyone.  -Aaron

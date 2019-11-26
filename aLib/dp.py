@@ -15,23 +15,17 @@ Methods contained herein:
     NthLargestS2
     Nth_SM_Window
     concatRQsWcuts
-    concatRQsWcutsAddFields
 
 2014.02.26 -- A. Manalaysay
 2014.03.24 -- Updated.
 2014.03.27 -- Updated
-2016.05.28 -- Updated
 """
 from __future__ import print_function
 import numpy as np
 import os
 import aLib
-import sys
-import time
-from time import sleep
 
-pyVersion = sys.version_info.major
-tDrift0 = 45000.
+tDrift0 = 35000.
 tEv0 = 5e5
 
 
@@ -481,14 +475,14 @@ def NthLargestS2(d, N=1, quantity='xyz_corrected_pulse_area_all_phe', tDrift=tDr
     qOut = (d[quantity] * S2NthLargestMask).sum(0)
     return qOut
 
-def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', printMultiple=5, sleepTimeBetween=0., memAllocate=None):
+def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', printMultiple=5):
     """
     Take RQ files and concatenate them with some cuts applied, outputting the results in a dictionary
     subclass ("S", part of aLib).  The statistics of the cuts are recorded in a few added dict keys, 
     as well as information (on an event-by-event basis) of which file and data set a particular event
     came from.
     
-    -------Inputs: ------------------------------------------------------------------------------------
+    -------Inputs:
         rqBasePath_list: Python list containing strings.  Each string specifies a path from which
                          RQ files will be taken.  Must include a trailing '/'
            fieldsToKeep: Which fields in the RQ files to keep, given as a Python list with a 
@@ -505,16 +499,7 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
                          (NOTE: even if rqBasePath_list has only one entry, it MUST still be a list)
           printMultiple: Integer, default: 5.  A progress notification will be printed after each 
                          multiple of this number of files has been loaded.
-       sleepTimeBetween: Default: 0. This is the time, in seconds, that the function will wait in 
-                         between loading data sets (i.e. the entries in 'rqBasePath_list', not 
-                         individual RQ files).  This can be useful if you have the RQ files on a dinky 
-                         external drive and you want to give it a rest from time to time.
-            memAllocate: (optional) Amount of memory to pre-allocate for the output structure, in MB.  
-                         If none is given, it uses the algorithm described in the change log below. The
-                         amount of memory specified is used to determine a number of events to 
-                         allocate, so the actual mem size might be slightly different from what the 
-                         user specifies.
-    ------Outputs: ------------------------------------------------------------------------------------
+    ------Outputs:
                       d: Dictionary containing the desired fields, concatenated from the desired
                          datasets, with the desired cuts applied. 
                          **NOTE**: This is not the builtin python "dict" class; this is my dict
@@ -530,7 +515,7 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
     
     Example: (it's better to do this as a non-interactive script, but whatever).
         In [1]: from aLib import dp
-        In [2]: rqBasePath_list = [ ]
+        In [2]: rqBasePath_list = []
         In [3]: rqBasePath.append("/data/lux10_20131031T1605_cp07728/matfiles/")
         In [4]: rqBasePath.append("/data/lux10_20131031T1605_cp07728/matfiles/")
         In [5]: fields = [<some list of fields as strings>]
@@ -557,15 +542,11 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
                                   or the file doesn't have the requisite RQs.
     2014.06.13 -- A. Manalaysay - Added error-checking code to make sure that certain required fields 
                                   are included in input 'fieldsToKeep'.
-    2014.07.10 -- A. Manalaysay - Begrudgingly debugged issues related to use with the ancient python2.7.
-    2014.09.17 -- A. Manalaysay - Added a kwarg to allow the function to wait some time interval in 
-                                  between data sets, if you want to give the io a brief respite.
     """
     # Input checking
     if (type(cuts)==str):
         if cuts=="none":
             flag_cutsNone = True
-            print("---NO CUTS---")
         else:
             raise TypeError("I dont' recognize your input 'cuts'.")
     elif (type(cuts)==list):
@@ -580,42 +561,19 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
     for reqField in requiredFields:
         if reqField not in fieldsToKeep:
             raise ValueError("Input 'fieldsToKeep' is missing required field '{:s}'".format(reqField))
-    if pyVersion != 3:
-        print("** concatRQsWcuts encourages you to graduate from the stone age and")
-        print("   switch from python v{:d}.{:d} to v3.x.".format(
-            pyVersion, sys.version_info.minor))
-    """
+    
     print("\n<<<<<<<<<<<<<<<<<<< dp.concatRQsWcuts >>>>>>>>>>>>>>>>>>>")
     print("<<<<                     STARTING                    >>>>")
     print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n")
-    """
-    try:
-        terminalWidth = eval(os.popen('stty size','r').read().split()[1])
-    except:
-        terminalWidth = 100
-    print("\n")
-    print("{:s} dp.concatRQsWcuts {:s}".format(
-        "<"*np.int64((terminalWidth-19)/2),
-        ">"*(terminalWidth-19-np.int64((terminalWidth-19)/2))))
-    print("<<<<{:s}STARTING{:s}>>>>".format(
-        " "*np.int64((terminalWidth-8-8)/2),
-        " "*(terminalWidth-8-8-np.int64((terminalWidth-8-8)/2))))
-    print("{:s}{:s}".format(
-        "<"*np.int64(terminalWidth/2),
-        ">"*(terminalWidth-np.int64(terminalWidth/2))))
-    print("\n")
+    
     #--------------------------<Determine the number of files>--------------------------#
-    #print("Determining total number of files.", end="", flush=True) # this doesn't work in py2.7
-    print("Determining total number of files.", end="")
-    sys.stdout.flush()
+    print("Determining total number of files.", end="", flush=True)
     NumFilesTotal = 0
     for kRQ, rqBasePath in enumerate(rqBasePath_list):
-        #print(".", end="", flush=True)
-        print(".", end="")
-        sys.stdout.flush()
+        print(".", end="", flush=True)
         if type(fileList)==str:
             if fileList=="all":
-                rqFileNames = sorted(os.listdir(rqBasePath))
+                rqFileNames = os.listdir(rqBasePath)
             else:
                 raise TypeError("I don't recognize your fileList.")
         else:
@@ -626,15 +584,13 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
     
     #------------------------<Estimate the total passing events>------------------------#
     tStatMessage = "Estimating number of events that will pass cuts."
-    #print(tStatMessage, end="\r", flush=True)
-    print(tStatMessage, end="\r")
-    sys.stdout.flush()
+    print(tStatMessage, end="\r", flush=True)
     kRQ = 0
     rqBasePath = rqBasePath_list[0]
     numCutPassInit = 0
     
     if fileList=="all":
-        rqFileNames = sorted(os.listdir(rqBasePath))
+        rqFileNames = os.listdir(rqBasePath)
     else:
         rqFileNames = fileList
     
@@ -642,14 +598,10 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
     flag_NoInitYet = True
     #b = aLib.S()
     for k0 in range(min(10,len(rqFileNames))):
-        #print("{:s}{:s}".format(tStatMessage, k0*"."),end='\r',flush=True)
-        print("{:s}{:s}".format(tStatMessage, k0*"."),end='\r')
-        sys.stdout.flush()
+        print("{:s}{:s}".format(tStatMessage, k0*"."),end='\r',flush=True)
         FileName = rqFileNames[k0]
         try:
-            fieldsToLoad = fieldsToKeep + ['admin']
-            #b = aLib.mfile.mload(rqBasePath + FileName,variable_names=fieldsToKeep)
-            b = aLib.mfile.mload(rqBasePath + FileName,variable_names=fieldsToLoad)
+            b = aLib.mfile.mload(rqBasePath + FileName,variable_names=fieldsToKeep)
             if 'pulse_classification' in b.keys():
                 flag_loadSuccess = True
             else:
@@ -685,14 +637,9 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
             numCutPassInit += tCutsAll.sum()
     # Scale the number that pass the cuts by the number of total files and add 10%.
     NumEstPass = np.int64(numCutPassInit * NumFilesTotal / min(10,len(rqFileNames)))
-    if NumEstPass == 0:
-        NumEstPass = 4
     NumEstPassExtra = np.int64((numCutPassInit+2*np.sqrt(numCutPassInit)) * \
         NumFilesTotal / min(10,len(rqFileNames)))
     print("{:s}{:s} Roughly {:d}".format(tStatMessage, k0*".", np.uint64(NumEstPass)))
-    if memAllocate!=None:
-        NumEstPassExtra = np.int64(memAllocate*(2**20)/bytesPerEvent)
-        print("Overriding the normal memory-allocation estimation.  Allocating for {:d} events.".format(NumEstPassExtra))
     def repSize(x):
         byteRank = np.floor(np.log2(x)/10)
         decChar = ['B','KB','MB','GB','TB','PB','EB']
@@ -704,7 +651,7 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
         print("\n    {:s} Allocating {:s}!! {:s}".format(10*"*",repSize(bytesPerEvent*NumEstPassExtra), 10*"*"))
         print(" ( CTRL-C WITHIN 10 SECONDS IF THAT'S TOO MUCH )")
         print("\n******************* <\\WARNING> *******************")
-        #from time import sleep
+        from time import sleep
         sleep(10)
         
     #------------------------</Estimate the total passing events>------------------------#
@@ -722,29 +669,20 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
     flag_NoInitYet = True
     for kRQ, rqBasePath in enumerate(rqBasePath_list):
         if fileList=="all":
-            rqFileNames = sorted(os.listdir(rqBasePath))
+            rqFileNames = os.listdir(rqBasePath)
         else:
             rqFileNames = fileList
         print('\n\n**** {:s} ****'.format(rqBasePath))
         for k0, FileName in enumerate(rqFileNames):
-            #FileName = rqFileNames[k0]
-            if (((k0+1) % printMultiple) == 0) or (k0==(len(rqFileNames)-1)) :
-                print("-----({:s}{:s}) {:d}/{:d} files\t{:s}".format(
-                        ">"*np.int64((np.float64(k0)/(len(rqFileNames)-1))*40), 
-                        " "*(40-np.int64((np.float64(k0)/(len(rqFileNames)-1))*40)), 
-                        k0+1, len(rqFileNames), 
-                        str_pastAllocate),
-                        end="\r")
-                sys.stdout.flush()
+            FileName = rqFileNames[k0]
+            if ((k0 % printMultiple) == 0) or (k0==(len(rqFileNames)-1)) :
+                print("-----({:s}{:s}) {:d}/{:d} files\t{:s}".format(">"*np.int64((k0/(len(rqFileNames)-1))*40), 
+                    " "*(40-np.int64((k0/(len(rqFileNames)-1))*40)), k0+1, len(rqFileNames), str_pastAllocate),
+                    end="\r", flush=True)
             try:
-                fieldsToLoad = fieldsToKeep + ['admin']
-                #b = aLib.mfile.mload(rqBasePath + FileName,variable_names=fieldsToKeep)
-                b = aLib.mfile.mload(rqBasePath + FileName,variable_names=fieldsToLoad)
+                b = aLib.mfile.mload(rqBasePath + FileName,variable_names=fieldsToKeep)
                 #   aLib.mfile.mload(rqBasePath + FileName, mdict=b, variable_names=fieldsToKeep)
-                if ('pulse_classification' in b.keys()) & \
-                   (len(b['pulse_classification'].shape)==2) & \
-                   (type(b['file_number'])==np.ndarray) & \
-                   (len(b['file_number'].shape)>0):
+                if 'pulse_classification' in b.keys():
                     flag_loadSuccess = True
                 else:
                     flag_loadSuccess = False
@@ -752,7 +690,7 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
                 flag_loadSuccess = False
                 pass
             if flag_loadSuccess:
-                numEventsTotal += len(np.array(b['file_number']))
+                numEventsTotal += len(b['file_number'])
                 # Initialize fields in the data structure and allocating memory
                 if flag_NoInitYet:
                     flag_NoInitYet = False
@@ -769,9 +707,9 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
                             d[FieldName] = np.empty([b[FieldName].shape[0],NumEstPassExtra],
                                 dtype=b[FieldName].dtype)
                         elif fieldDims == 3:
-                            d[FieldName] = \
+                            d[fieldName] = \
                                 np.empty([b[FieldName].shape[0],b[FieldName].shape[1],NumEstPassExtra], \
-                                dtype=b[FieldName].dtype)
+                                dtype=b[fieldName].dtype)
                 # Make cuts
                 if flag_cutsNone:
                     tCutsAll = np.array([True]*len(b['file_number']))
@@ -786,8 +724,6 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
                     for cut in tCuts:
                         tCutsAll = tCutsAll & cut
                 tNumCutPass = tCutsAll.sum()
-                if tNumCutPass==0:
-                    print("---Shape of tCutsAll: {:s} -- {:s}".format(tCutsAll.shape.__str__(),FileName))
                 if (k_CutStep+tNumCutPass) < NumEstPassExtra:  # The normal action
                     # Apply cuts and append to the final data structure
                     d.pathNum[k_CutStep:(k_CutStep+tNumCutPass)] = \
@@ -795,8 +731,6 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
                     d.fileNum[k_CutStep:(k_CutStep+tNumCutPass)] = \
                         np.ones(tCutsAll.sum(),dtype=np.uint16)*np.uint16(k0)
                     for k1, FieldName in enumerate(fieldsToKeep):
-                        if type(b[FieldName]) != np.ndarray:
-                            b[FieldName] = np.r_[b[FieldName]]
                         if fieldDimLengths[k1] == 1:
                             d[FieldName][k_CutStep:(k_CutStep+tNumCutPass)] = b[FieldName][tCutsAll]
                         elif fieldDimLengths[k1] == 2:
@@ -806,7 +740,6 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
                     k_CutStep += tNumCutPass
                 else:   # Uh oh, this only runs if you've run past the initial mem allocation
                     if flag_pastAllocateFirst:
-                        print("PAST PAST PAST PAST PAST PAST PAST PAST ")
                         flag_pastAllocate = True
                         flag_pastAllocateFirst = False
                         str_pastAllocate = "(Past initial mem. allocation)"
@@ -818,12 +751,8 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
                             if fieldDimLengths[k2] == 3:
                                 d[FieldName] = d[FieldName][:,:,:k_CutStep]
                     # Apply cuts and append to the final data structure
-                    #d.pathNum = np.hstack([d.pathNum, np.ones(tCutsAll.sum(),dtype=np.uint8)*np.uint8(kRQ)])
-                    #d.fileNum = np.hstack([d.fileNum, np.ones(tCutsAll.sum(),dtype=np.uint16)*np.uint16(k0)])
-                    d.pathNum = np.concatenate((d.pathNum,np.ones(tCutsAll.sum(),dtype=np.uint8)*np.uint8(kRQ)),
-                                axis=0)
-                    d.fileNum =np.concatenate((d.fileNum,np.ones(tCutsAll.sum(),dtype=np.uint16)*np.uint16(k0)),
-                                axis=0)
+                    d.pathNum = np.hstack([d.pathNum, np.ones(tCutsAll.sum(),dtype=np.uint8)+np.uint8(kRQ)])
+                    d.fileNum = np.hstack([d.fileNum, np.ones(tCutsAll.sum(),dtype=np.uint16)+np.uint16(k0)])
                     for k1, FieldName in enumerate(fieldsToKeep):
                         if fieldDimLengths[k1] == 1:
                             d[FieldName] = np.concatenate((d[FieldName],b[FieldName][tCutsAll]), axis=0)
@@ -831,11 +760,9 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
                             d[FieldName] = np.concatenate((d[FieldName],b[FieldName][:,tCutsAll]), axis=1)
                         elif fieldDimLengths[k1] == 3:
                             d[FieldName] = np.concatenate((d[FieldName],b[FieldName][:,:,tCutsAll]), axis=2)
-        time.sleep(sleepTimeBetween)
-    print("flag_pastAllocate = {:s}\n".format(flag_pastAllocate.__str__()))
+    
     if not flag_pastAllocate:
         # Truncate the RQs of the extra entries that weren't filled
-        print("k_CutStep = {:d}".format(k_CutStep))
         d.pathNum = d.pathNum[:k_CutStep]
         d.fileNum = d.fileNum[:k_CutStep]
         for k1, FieldName in enumerate(fieldsToKeep):
@@ -856,413 +783,6 @@ def concatRQsWcuts(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', p
         print("{:s}: {:s}".format(length_cutNameMax*"-", len("Num passing")*"-"))
         for k in range(len(cutNames)):
             print("{{:>{:d}s}}: {{:d}}".format(length_cutNameMax).format(cutNames[k],numCutsPass[k]))
-    return d
-
-
-def concatRQsWcutsAddFields(rqBasePath_list, fieldsToKeep, cuts='none', fileList='all', printMultiple=5, sleepTimeBetween=0., memAllocate=None, funcList=[], auxFields=[]):
-    """
-    Take RQ files and concatenate them with some cuts applied, outputting the results in a dictionary
-    subclass ("S", part of aLib).  The statistics of the cuts are recorded in a few added dict keys, 
-    as well as information (on an event-by-event basis) of which file and data set a particular event
-    came from.
-    
-    -------Inputs: ------------------------------------------------------------------------------------
-        rqBasePath_list: Python list containing strings.  Each string specifies a path from which
-                         RQ files will be taken.  Must include a trailing '/'
-           fieldsToKeep: Which fields in the RQ files to keep, given as a Python list with a 
-                         string as each element.  IMPORTANT: This list MUST include 'file_number', 
-                         and 'pulse_classification'.
-                   cuts: Cuts to apply. This input must be given as a list of function handles (even 
-                         if only one function is given, it must be a list of one element). The 
-                         user-defined functions contained therein must take a LUX RQ dict as input 
-                         and give a boolean ndarray as output. The name of the function given will
-                         be used when identifying the efficiency of the cut (that is, the thing that 
-                         comes out of func.__name__).
-               fileList: List of files, if you don't want to concatenate all the files in the path.
-                         This will choke if input 'rqBasePath_list' has more than one element 
-                         (NOTE: even if rqBasePath_list has only one entry, it MUST still be a list)
-          printMultiple: Integer, default: 5.  A progress notification will be printed after each 
-                         multiple of this number of files has been loaded.
-       sleepTimeBetween: Default: 0. This is the time, in seconds, that the function will wait in 
-                         between loading data sets (i.e. the entries in 'rqBasePath_list', not 
-                         individual RQ files).  This can be useful if you have the RQ files on a dinky 
-                         external drive and you want to give it a rest from time to time.
-            memAllocate: (optional) Amount of memory to pre-allocate for the output structure, in MB.  
-                         If none is given, it uses the algorithm described in the change log below. The
-                         amount of memory specified is used to determine a number of events to 
-                         allocate, so the actual mem size might be slightly different from what the 
-                         user specifies.
-               funcList: List of functions that will add fields to the data structure. This input must
-                         be a python list. Each element of the list must be a function that takes the
-                         RQ data structure as an input and it must produce one output, which is the 
-                         array that will be added to the final data structure.  The name of the added
-                         field is taken from the name of the function (similar to how the naming works
-                         in the 'cuts' input.  The extra fields to be added are calculated BEFORE cuts
-                         are calculated, which means that cuts in 'cuts' CAN work on the output of 
-                         these functions.
-              auxFields: If more fields are needed for 'funcList' than those listed in 'fieldsToKeep',
-                         but which will be discarded later, they should be listed here.
-    ------Outputs: ------------------------------------------------------------------------------------
-                      d: Dictionary containing the desired fields, concatenated from the desired
-                         datasets, with the desired cuts applied. 
-                         **NOTE**: This is not the builtin python "dict" class; this is my dict
-                         subclass (which is better than plain dict), located in the module "aLib".
-                         The following keys are added to the dictionary:
-                               RQ_paths: Copy of 'rqBasePath' that was input.
-                                pathNum: Tells which element of RQ_paths the event fell in.
-                                fileNum: Tells which file in the path element the event fell in.
-                         numEventsTotal: Tells how many events were contained in the RQs total, 
-                                         before cuts.
-                            numCutsPass: Included if input 'cuts' is not 'none'. Gives the number of 
-                                         events that passed each cut, separately.
-    
-    Example: (it's better to do this as a non-interactive script, but whatever).
-        In [1]: from aLib import dp
-        In [2]: rqBasePath_list = [ ]
-        In [3]: rqBasePath.append("/data/lux10_20131031T1605_cp07728/matfiles/")
-        In [4]: rqBasePath.append("/data/lux10_20131031T1605_cp07728/matfiles/")
-        In [5]: fields = [<some list of fields as strings>]
-        In [6]: def SingleScatterCut(b):
-           ...:     <cut logic>
-           ...:    return CutArray_bool
-        In [7]: def FiducialCut(b):
-           ...:     <cut logic>
-           ...:     return CutArray_bool
-        In [8]: cuts = [SingleScatterCut, FiducialCut]
-        In [9]: d = dp.concatRQsWcuts(rqBasePath_list, fields, cuts)
-    
-    2014.03.01 -- A. Manalaysay
-    2014.03.23 -- A. Manalaysay - Changed the method by which the user passes cuts to the concatenation
-                                  function, allowing for more sophisticated cuts to be implemented. 
-    2014.03.27 -- A. Manalaysay - Added pre-allocation of memory for the final data dictionary.  Memory 
-                                  size is estimated by applying cuts to the first 10 files, counting how 
-                                  many events pass, adding 2*sigma, and then scaling by the total number 
-                                  of files; if this memory is exceeded, the function still works, it just 
-                                  appends new events onto the existing structure.  A warning is given if 
-                                  the estimated memory usage will be more than 2 GB, in which case the 
-                                  user has 10 seconds to kill the function via ctrl-c.  Additionally, 
-                                  error handling has been added to handle cases where a file can't load, 
-                                  or the file doesn't have the requisite RQs.
-    2014.06.13 -- A. Manalaysay - Added error-checking code to make sure that certain required fields 
-                                  are included in input 'fieldsToKeep'.
-    2014.07.10 -- A. Manalaysay - Begrudgingly debugged issues related to use with the ancient python2.7.
-    2014.09.17 -- A. Manalaysay - Added a kwarg to allow the function to wait some time interval in 
-                                  between data sets, if you want to give the io a brief respite.
-    2016.05.28 -- A. Manalaysay - FUNCTION FORK, from concatRQsWcuts.  Adding the ability to pass 
-                                  functions that will add additional fields to the data structure.  For
-                                  example, per-channel fields take up a lot of memory, but perhaps one is
-                                  needed, but only at the beginning for a calculation producing a smaller
-                                  array (a per-pulse array, for example).  It's more economical to have 
-                                  that calculation operate on the contents of each file, then discard the 
-                                  large array.
-    """
-    #--------------------------<Input checking>--------------------------#
-    if (type(cuts)==str):
-        if cuts=="none":
-            flag_cutsNone = True
-        else:
-            raise TypeError("I dont' recognize your input 'cuts'.")
-    elif (type(cuts)==list):
-        flag_cutsNone = False
-        numCutsPass = [0]*len(cuts)
-        cutNames = [cut.__name__ for cut in cuts]
-    else:
-        raise TypeError("Input 'cuts' must be either 'none' or a list of function handles.")
-    numEventsTotal = 0
-    fieldDimLengths = np.zeros(len(fieldsToKeep+funcList),dtype=np.uint8)
-    requiredFields = ['file_number','pulse_classification']
-    for reqField in requiredFields:
-        if reqField not in fieldsToKeep:
-            raise ValueError("Input 'fieldsToKeep' is missing required field '{:s}'".format(reqField))
-    if pyVersion < 3:
-        print("** Aaron encourages you to graduate from the stone age and")
-        print("   switch from python v{:d}.{:d} to v3.x.".format(
-            pyVersion, sys.version_info.minor))
-    if funcList is not None:
-        flag_addingFields = True
-        fieldNamesToAdd = [tempFunc.__name__ for tempFunc in funcList]
-    else:
-        flag_addingFields = False
-    
-    #--------------------------</Input checking>--------------------------#
-    
-    try:
-        terminalWidth = eval(os.popen('stty size','r').read().split()[1])
-    except:
-        terminalWidth = 100
-    print("\n")
-    print("{:s} dp.concatRQsWcutsAddFields {:s}".format(
-        "<"*np.int64((terminalWidth-28)/2),
-        ">"*(terminalWidth-28-np.int64((terminalWidth-28)/2))))
-    print("<<<<{:s}STARTING{:s}>>>>".format(
-        " "*np.int64((terminalWidth-8-8)/2),
-        " "*(terminalWidth-8-8-np.int64((terminalWidth-8-8)/2))))
-    print("{:s}{:s}".format(
-        "<"*np.int64(terminalWidth/2),
-        ">"*(terminalWidth-np.int64(terminalWidth/2))))
-    print("\n")
-    
-    #--------------------------<Determine the number of files>--------------------------#
-    #print("Determining total number of files.", end="", flush=True) # this doesn't work in py2.7
-    print("Determining total number of files.", end="")
-    sys.stdout.flush()
-    NumFilesTotal = 0
-    for kRQ, rqBasePath in enumerate(rqBasePath_list):
-        #print(".", end="", flush=True)
-        print(".", end="")
-        sys.stdout.flush()
-        if type(fileList)==str:
-            if fileList=="all":
-                rqFileNames =sorted(os.listdir(rqBasePath))
-            else:
-                raise TypeError("I don't recognize your fileList.")
-        else:
-            rqFileNames = fileList
-        NumFilesTotal += len(rqFileNames)
-    print("\t {:d}".format(NumFilesTotal))
-    #--------------------------</Determine the number of files>--------------------------#
-    
-    #------------------------<Estimate the total passing events and mem>------------------------#
-    tStatMessage = "Estimating number of events that will pass cuts."
-    #print(tStatMessage, end="\r")
-    print(tStatMessage, end="")
-    sys.stdout.flush()
-    kRQ = 0
-    rqBasePath = rqBasePath_list[0]
-    numCutPassInit = 0
-    
-    if fileList=="all":
-        rqFileNames = sorted(os.listdir(rqBasePath))
-    else:
-        rqFileNames = fileList
-    
-    bytesPerEvent = 0
-    flag_NoInitYet = True
-    for k0 in range(min(10,len(rqFileNames))):
-        #print("{:s}{:s}".format(tStatMessage, k0*"."),end='\r')
-        print(".",end='')
-        sys.stdout.flush()
-        FileName = rqFileNames[k0]
-        try:
-            fieldsToLoad = fieldsToKeep + auxFields + ['admin']
-            b = aLib.mfile.mload(rqBasePath + FileName,variable_names=fieldsToLoad)
-            if 'pulse_classification' in b.keys():
-                flag_loadSuccess = True
-            else:
-                flag_loadSuccess = False
-        except:
-            flag_loadSuccess = False
-            pass
-        if flag_loadSuccess:
-            # Handle the extra calcs option
-            # funcList - list of functions
-            # fieldNamesToAdd - names of the functions in funcList
-            if flag_addingFields:
-                for theFunc, theFuncName in zip(funcList,fieldNamesToAdd):
-                    b[theFuncName] = theFunc(b)
-            
-            if flag_NoInitYet:
-                flag_NoInitYet = False
-                for k1, FieldName in enumerate(fieldsToKeep + fieldNamesToAdd):
-                    fieldDims = np.ndim(b[FieldName])
-                    if fieldDims==1:
-                        bytesPerEvent += np.empty(1, dtype=b[FieldName].dtype).nbytes
-                    elif fieldDims==2:
-                        bytesPerEvent += np.empty([b[FieldName].shape[0],1], dtype=b[FieldName].dtype).nbytes
-                    elif fieldDims==3:
-                        bytesPerEvent += \
-                            np.empty([b[FieldName].shape[0],b[FieldName].shape[1],1], \
-                            dtype=b[FieldName].dtype).nbytes
-            # Make cuts
-            if flag_cutsNone:
-                #tCutsAll = np.array([True]*len(b['file_number']))
-                tCutsAll = np.ones(len(b['file_number']), dtype=bool)
-            else:
-                tCuts = []
-                for kCut, cut in enumerate(cuts):
-                    tCutItem = cut(b)
-                    tCuts.append(tCutItem)
-                del cut
-                #tCutsAll = np.tile(True,len(tCuts[0]))
-                tCutsAll = np.ones(len(tCuts[0]), dtype=bool)
-                for cut in tCuts:
-                    tCutsAll = tCutsAll & cut
-            numCutPassInit += tCutsAll.sum()
-    # Scale the number that pass the cuts by the number of total files and add 10%.
-    NumEstPass = np.int64(numCutPassInit * NumFilesTotal / min(10,len(rqFileNames)))
-    if NumEstPass == 0:
-        NumEstPass = 4
-    NumEstPassExtra = np.int64((numCutPassInit+2*np.sqrt(numCutPassInit)) * \
-        NumFilesTotal / min(10,len(rqFileNames)))
-    #print("{:s}{:s} Roughly {:d}".format(tStatMessage, k0*".", np.uint64(NumEstPass)))
-    print(" Roughly {:d}".format(np.uint64(NumEstPass)))
-    if memAllocate is not None:
-        NumEstPassExtra = np.int64(memAllocate*(2**20)/bytesPerEvent)
-        print("Overriding the normal memory-allocation estimation.  Allocating for {:d} events.".format(NumEstPassExtra))
-    def repSize(x):
-        byteRank = np.floor(np.log2(x)/10)
-        decChar = ['B','KB','MB','GB','TB','PB','EB']
-        return "{:0.1f} {:s}".format(x/(2**(byteRank*10)),decChar[np.uint16(byteRank)])
-    if (bytesPerEvent*NumEstPassExtra) < (2**31): # 2GB warning flag is hard coded.
-        print("\n{:s} Allocating {:s} {:s}".format(10*"*",repSize(bytesPerEvent*NumEstPassExtra), 10*"*"))
-    else:
-        print("******************* <WARNING> *******************")
-        print("\n    {:s} Allocating {:s}!! {:s}".format(10*"*",repSize(bytesPerEvent*NumEstPassExtra), 10*"*"))
-        print(" ( CTRL-C WITHIN 10 SECONDS IF THAT'S TOO MUCH )")
-        print("\n******************* <\\WARNING> *******************")
-        #from time import sleep
-        sleep(10)
-        
-    #------------------------</Estimate the total passing events and mem>------------------------#
-    
-    
-    
-    #***************************************************************************************************
-    #------------------------<Load files, calc fn's, apply cuts, and concatenate>------------------------#
-    # Initialize the data structure
-    d = aLib.S()
-    d.RQ_paths = rqBasePath_list
-    k_CutStep = 0
-    flag_pastAllocate = False
-    flag_pastAllocateFirst = True
-    str_pastAllocate = ""
-    flag_NoInitYet = True
-    for kRQ, rqBasePath in enumerate(rqBasePath_list):
-        if fileList=="all":
-            rqFileNames = sorted(os.listdir(rqBasePath))
-        else:
-            rqFileNames = fileList
-        print('\n\n**** {:s} ****'.format(rqBasePath))
-        for k0, FileName in enumerate(rqFileNames):
-            #FileName = rqFileNames[k0]
-            if (((k0+1) % printMultiple) == 0) or (k0==(len(rqFileNames)-1)) :
-                print("-----({:s}{:s}) {:d}/{:d} files\t{:s}".format(
-                        ">"*np.int64((np.float64(k0)/(len(rqFileNames)-1))*40), 
-                        " "*(40-np.int64((np.float64(k0)/(len(rqFileNames)-1))*40)), 
-                        k0+1, len(rqFileNames), 
-                        str_pastAllocate),
-                        end="\r")
-                sys.stdout.flush()
-            try:
-                fieldsToLoad = fieldsToKeep + auxFields + ['admin']
-                b = aLib.mfile.mload(rqBasePath + FileName,variable_names=fieldsToLoad)
-                if ('pulse_classification' in b.keys()) & \
-                   (type(b['file_number'])==np.ndarray) & \
-                   (len(b['file_number'].shape)>0):
-                    flag_loadSuccess = True
-                else:
-                    flag_loadSuccess = False
-            except:
-                flag_loadSuccess = False
-                pass
-            if flag_loadSuccess:
-                numEventsTotal += len(np.array(b['file_number']))
-                if flag_addingFields:
-                    for theFunc, theFuncName in zip(funcList, fieldNamesToAdd):
-                        b[theFuncName] = theFunc(b)
-                # Initialize fields in the data structure and allocating memory
-                if flag_NoInitYet:
-                    flag_NoInitYet = False
-                    d.pathNum = np.empty(NumEstPassExtra, dtype=np.uint8)
-                    d.fileNum = np.empty(NumEstPassExtra,dtype=np.uint16)
-                    for k1, FieldName in enumerate(fieldsToKeep + fieldNamesToAdd):
-                        fieldDims = np.ndim(b[FieldName])
-                        fieldDimLengths[k1] = fieldDims
-                        #if fieldDims == 0:
-                        #    d[FieldName] = []
-                        if fieldDims == 1:
-                            d[FieldName] = np.empty(NumEstPassExtra, dtype=b[FieldName].dtype)
-                        elif fieldDims == 2:
-                            d[FieldName] = np.empty([b[FieldName].shape[0],NumEstPassExtra],
-                                dtype=b[FieldName].dtype)
-                        elif fieldDims == 3:
-                            d[FieldName] = \
-                                np.empty([b[FieldName].shape[0],b[FieldName].shape[1],NumEstPassExtra], \
-                                dtype=b[FieldName].dtype)
-                # Make cuts
-                if flag_cutsNone:
-                    #tCutsAll = np.array([True]*len(b['file_number']))
-                    tCutsAll = np.ones(len(b['file_number']), dtype=bool)
-                else:
-                    tCuts = []
-                    for kCut, cut in enumerate(cuts):
-                        tCutItem = cut(b)
-                        numCutsPass[kCut] += tCutItem.sum()
-                        tCuts.append(tCutItem)
-                    del cut
-                    tCutsAll = np.tile(True,len(tCuts[0]))
-                    for cut in tCuts:
-                        tCutsAll = tCutsAll & cut
-                tNumCutPass = tCutsAll.sum()
-                if (k_CutStep+tNumCutPass) < NumEstPassExtra:  # The normal action
-                    # Apply cuts and append to the final data structure
-                    d.pathNum[k_CutStep:(k_CutStep+tNumCutPass)] = \
-                        np.ones(tCutsAll.sum(),dtype=np.uint8)*np.uint8(kRQ)
-                    d.fileNum[k_CutStep:(k_CutStep+tNumCutPass)] = \
-                        np.ones(tCutsAll.sum(),dtype=np.uint16)*np.uint16(k0)
-                    for k1, FieldName in enumerate(fieldsToKeep + fieldNamesToAdd):
-                        if fieldDimLengths[k1] == 1:
-                            d[FieldName][k_CutStep:(k_CutStep+tNumCutPass)] = b[FieldName][tCutsAll]
-                        elif fieldDimLengths[k1] == 2:
-                            d[FieldName][:,k_CutStep:(k_CutStep+tNumCutPass)] = b[FieldName][:,tCutsAll]
-                        elif fieldDimLengths[k1] == 3:
-                            d[FieldName][:,:,k_CutStep:(k_CutStep+tNumCutPass)] = b[FieldName][:,:,tCutsAll]
-                    k_CutStep += tNumCutPass
-                else:   # Uh oh, this only runs if you've run past the initial mem allocation
-                    if flag_pastAllocateFirst:
-                        print("PAST PAST PAST PAST PAST PAST PAST PAST ")
-                        flag_pastAllocate = True
-                        flag_pastAllocateFirst = False
-                        str_pastAllocate = "(Past initial mem. allocation)"
-                        for k2, FieldName in enumerate(fieldsToKeep + fieldNamesToAdd):
-                            if fieldDimLengths[k2] == 1:
-                                d[FieldName] = d[FieldName][:k_CutStep]
-                            if fieldDimLengths[k2] == 2:
-                                d[FieldName] = d[FieldName][:,:k_CutStep]
-                            if fieldDimLengths[k2] == 3:
-                                d[FieldName] = d[FieldName][:,:,:k_CutStep]
-                    # Apply cuts and append to the final data structure
-                    #d.pathNum = np.hstack([d.pathNum, np.ones(tCutsAll.sum(),dtype=np.uint8)*np.uint8(kRQ)])
-                    #d.fileNum = np.hstack([d.fileNum, np.ones(tCutsAll.sum(),dtype=np.uint16)*np.uint16(k0)])
-                    d.pathNum = np.concatenate((d.pathNum,np.ones(tCutsAll.sum(),dtype=np.uint8)*np.uint8(kRQ)),
-                                axis=0)
-                    d.fileNum =np.concatenate((d.fileNum,np.ones(tCutsAll.sum(),dtype=np.uint16)*np.uint16(k0)),
-                                axis=0)
-                    for k1, FieldName in enumerate(fieldsToKeep + fieldNamesToAdd):
-                        if fieldDimLengths[k1] == 1:
-                            d[FieldName] = np.concatenate((d[FieldName],b[FieldName][tCutsAll]), axis=0)
-                        elif fieldDimLengths[k1] == 2:
-                            d[FieldName] = np.concatenate((d[FieldName],b[FieldName][:,tCutsAll]), axis=1)
-                        elif fieldDimLengths[k1] == 3:
-                            d[FieldName] = np.concatenate((d[FieldName],b[FieldName][:,:,tCutsAll]), axis=2)
-        time.sleep(sleepTimeBetween)
-    print("flag_pastAllocate = {:s}\n".format(flag_pastAllocate.__str__()))
-    if not flag_pastAllocate:
-        # Truncate the RQs of the extra entries that weren't filled
-        print("k_CutStep = {:d}".format(k_CutStep))
-        d.pathNum = d.pathNum[:k_CutStep]
-        d.fileNum = d.fileNum[:k_CutStep]
-        for k1, FieldName in enumerate(fieldsToKeep + fieldNamesToAdd):
-            if fieldDimLengths[k1] == 1:
-                d[FieldName] = d[FieldName][:k_CutStep]
-            elif fieldDimLengths[k1] == 2:
-                d[FieldName] = d[FieldName][:,:k_CutStep]
-            elif fieldDimLengths[k1] == 3:
-                d[FieldName] = d[FieldName][:,:,:k_CutStep]
-    
-    d['numEventsTotal'] = numEventsTotal
-    if not flag_cutsNone:
-        d['numCutsPass'] = [[x,y] for x,y in zip(cutNames,numCutsPass)]
-        print("\n\nNumber of events before cuts: {:d}".format(numEventsTotal))
-        print("Number of events after  cuts: {:d}".format(d.pulse_classification.shape[1]))
-        length_cutNameMax = max(len("Cut name"),np.array([len(cName) for cName in cutNames]).max())
-        print("{{:>{:d}s}}: {{:s}}".format(length_cutNameMax).format("Cut name","Num passing"))
-        print("{:s}: {:s}".format(length_cutNameMax*"-", len("Num passing")*"-"))
-        for k in range(len(cutNames)):
-            print("{{:>{:d}s}}: {{:d}}".format(length_cutNameMax).format(cutNames[k],numCutsPass[k]))
-    
-    #------------------------</Load files, calc fn's, apply cuts, and concatenate>------------------------#
-    
     return d
 
 
