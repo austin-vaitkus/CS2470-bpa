@@ -27,7 +27,8 @@ def train(model, data):
 def main():
 
     # dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
-    dataset_list = ['lux10_20160802T1425']  # Small piece of Kr data
+    #dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
+    dataset_list = ['lux10_20130425T1047'] # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
 
     # Generic pulse finding RQs
     # fields = ["pulse_area_phe", "luxstamp_samples", "pulse_classification",
@@ -75,10 +76,11 @@ def main():
     print('All RQs loaded!')
 
     pulse_classification = rq[0].pulse_classification
-    num_S1s = np.sum(pulse_classification==1,axis=0)
-    num_S2s = np.sum(pulse_classification==2,axis=0)
-    num_sphe = np.sum(pulse_classification==3, axis=0)
-    num_se = np.sum(pulse_classification==4, axis=0)
+    num_pulses = np.sum(pulse_classification > 0, axis=0)
+    num_S1s = np.sum(pulse_classification == 1,axis=0)
+    num_S2s = np.sum(pulse_classification == 2,axis=0)
+    num_se = np.sum(pulse_classification == 3, axis=0)
+    num_sphe = np.sum(pulse_classification == 4, axis=0)
     print('[end file]')
 
 
