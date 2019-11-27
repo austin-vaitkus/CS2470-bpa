@@ -20,7 +20,15 @@ def get_data(dataset_list, fields):
         # rqBasePath_list.append("/data/rq/{:s}/matfiles/".format(dataset[ii]))
         rqBasePath_list.append("./data/{:s}/matfiles/".format(dataset_list[ii]))
 
+    # Recover the requested rqs for the datasets provided
     rq = dp.concatRQsWcuts([rqBasePath_list[0]], fields)
+
+    # Break apart events into pulses, then compile these into a list while assigning them an event index for later association when we look at event structures.
+
+    for key, value in rq.items():
+        tf.reshape(rq[key], shape=[1,-1])
+
+    print('ualue')
 
     labels = None
     return rq, labels

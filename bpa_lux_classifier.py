@@ -75,12 +75,18 @@ def main():
     rq = get_data(dataset_list, fields)
     print('All RQs loaded!')
 
+    # Create some variables for ease of broad event classification and population checking.
     pulse_classification = rq[0].pulse_classification
     num_pulses = np.sum(pulse_classification > 0, axis=0)
     num_S1s = np.sum(pulse_classification == 1,axis=0)
     num_S2s = np.sum(pulse_classification == 2,axis=0)
     num_se = np.sum(pulse_classification == 3, axis=0)
     num_sphe = np.sum(pulse_classification == 4, axis=0)
+
+
+
+
+
     print('[end file]')
 
 
