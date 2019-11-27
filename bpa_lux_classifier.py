@@ -25,7 +25,8 @@ class Model(tf.keras.Model):
         # Model Hyperparameters
         self.batch_size = 10
         self.num_classes = 5
-        self.learning_rate = 1e-3
+        self.learning_rate = 2e-3
+        self.drop_rate = 0.1
 
         # Model Layers
         self.dense1 = tf.keras.layers.Dense(self.num_classes*30, activation = 'relu', dtype=tf.float32, name='dense1')
@@ -106,7 +107,8 @@ def train(model, inputs, labels):
     batch_counter = 0
 
     # Loop through inputs in model.batch_size increments
-    for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size), range(model.batch_size, inputs.shape[0], model.batch_size)):
+    for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size),
+                          range(model.batch_size, inputs.shape[0], model.batch_size)):
         batch_counter += 1
 
         # Redefine batched inputs and labels
@@ -240,6 +242,7 @@ def main():
     train_rqs, train_labels, pulse_event_index, test_rqs, test_labels, test_event_index = get_data(dataset_list, fields)
     train_labels = train_labels - 1
     test_labels = test_labels - 1
+
 #%%
 #    print('pulse rq shape', pulse_rqs.shape)
 #    print('labels shape', labels.shape)
@@ -259,13 +262,10 @@ def main():
     epochs = 1
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
-        print('Epoch {} Complete. Total Time = {} minutes\n'.format(epoch+1, round((time.time()-t)/60,1)))#, accuracy))
-#        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
-    
-    t = time.time()
-    
-    test_acc, test_loss = test(model, test_rqs, test_labels)
-    print('Testing Complete. Testing Time = {0:1.1f} minutes\nTesting Accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
+        test_acc, test_loss = test(model, test_rqs, test_labels)
+        print('Epoch {0:d} Complete. Total Time = {1:2.1f} minutes\nTesting Accuracy = {2:.0%}, Testing Loss = {3:2.1f}\n'.format(epoch+1, round((time.time()-t)/60,1), test_acc, test_loss))
+
+    print('Training finished in {0:1.1f} minutes with final accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
 
 
 if __name__ == '__main__':
