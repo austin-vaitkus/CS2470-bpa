@@ -200,13 +200,13 @@ def main():
     pulse_rqs, labels, pulse_event_index = get_data(dataset_list, fields)
     labels = labels - 1
 #%%
-    print('pulse rq shape', pulse_rqs.shape)
-    print('labels shape', labels.shape)
-    print('pulse event index shape', pulse_event_index.shape)
+#    print('pulse rq shape', pulse_rqs.shape)
+#    print('labels shape', labels.shape)
+#    print('pulse event index shape', pulse_event_index.shape)
     
-    print('labels',labels[:,0])   
-    print(pulse_event_index[0:11])
-    print(pulse_rqs[0].shape)
+#    print('labels',labels[:,0])   
+#    print(pulse_event_index[0:11])
+#    print(pulse_rqs[0].shape)
     
 #%%
     # Define model
