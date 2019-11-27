@@ -9,9 +9,11 @@ from scipy import io
 def get_data(dataset_list, fields):
     """
 	Given a file path and a list of RQs returns the data for the specified dataset and RQs.
-	:param file_path: file path for inputs and labels. Trial set is '/data/lux10_20160627T0824_cp24454'
+	:param dataset_list: file path for inputs and labels. Trial set is '/data/lux10_20160627T0824_cp24454'
 	:param fields: list of strings containing the desired rq names to be loaded
-	:return: NumPy array of training rqs of size [num_pulses x num_pulse_RQs], classifier labels of size [num_pulses x 1] and pulse event index of size [num_pulses x 1]
+	:return pulse_rqs: NumPy array of training rqs of size [num_pulses x num_pulse_RQs], 
+    :return labels: classifier labels of size [num_pulses x 1] 
+    :return pulse_event_index: pulse event index of size [num_pulses x 1]
 	"""
 
     rqBasePath_list = []
@@ -61,5 +63,5 @@ def get_data(dataset_list, fields):
     pulse_rqs = np.delete(arr=pulse_rqs, obj=empty_pulse_index, axis=0)
     labels = np.delete(arr=labels, obj=empty_pulse_index, axis=0)
     pulse_event_index = np.delete(arr=pulse_event_index, obj=empty_pulse_index, axis=0)
-    print('Pulse RQ data block pre-processed')
+    print('\nPulse RQ data block pre-processed')
     return pulse_rqs, labels, pulse_event_index
