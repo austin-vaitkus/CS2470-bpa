@@ -9,7 +9,81 @@ import aLib
 from aLib import dp
 from preprocess import *
 
-def train(model, data):
+
+###################################
+
+class Model(tf.keras.Model):
+    def __init__(self):
+        """
+        This model class will contain the architecture for your CNN that 
+		classifies images. Do not modify the constructor, as doing so 
+		will break the autograder. We have left in variables in the constructor
+		for you to fill out, but you are welcome to change them if you'd like.
+		"""
+        super(Model, self).__init__()
+        
+        # Model Hyperparameters
+        self.batch_size = 10
+        self.num_classes = 5
+        self.learning_rate = 1e-3
+
+        # Model Layers
+        self.dense1 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense1')
+        self.dense2 = tf.keras.layers.Dense(self.num_classes, dtype=tf.float32, name='dense2')
+
+        # Initialize Optimizer
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate = self.learning_rate)
+        
+        
+
+    def call(self, inputs):
+        """
+        Performs the forward pass on a batch of RQs to generate pulse classification probabilities. 
+
+        :param inputs: a batch of RQ pulses of size [batch_size x num_RQs] 
+        :return: A [batch_size x num_classes] tensor representing the probability distribution of pulse classifications
+        """
+        
+        # Forward pass on inputs
+        dense1_output = self.dense1(inputs)
+        dense2_output = self.dense1(dense1_output)
+        
+        # Probabilities of each classification
+        probabilities = tf.nn.softmax(dense2_output)
+
+        return(probabilities)
+
+
+    def loss_function(self, probabilities, labels):
+        """
+        Calculate model's cross-entropy loss after one forward pass.
+        
+		:param probabilities: tensor containing probabilities of RQ classification prediction     [batch_size x num_classes]
+		:param labels: tensor containing RQ classification labels                                 [batch_size x num_classes]
+
+        :return: model loss as a tensor
+        """
+        return(tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(labels, probabilities)))
+
+
+    def accuracy_function(self, probabilities, labels):
+        """
+		Calculate model's accuracy by comparing logits and labels.
+        
+		:param probabilities: tensor containing probabilities of RQ classification prediction     [batch_size x num_classes]
+		:param labels: tensor containing RQ classification labels                                 [batch_size x num_classes]
+        
+		:return: model accuracy as scalar tensor
+		"""
+        correct_predictions = tf.equal(tf.argmax(probabilities, 1), tf.argmax(labels, 1))
+        return(tf.reduce_mean(tf.cast(correct_predictions, dtype = tf.float32)))
+
+
+
+
+################################
+
+def train(model, inputs, labels):
     """
     This function should train your model for one episode.
     Each call to this function should generate a complete trajectory for one episode (lists of states, action_probs,
@@ -20,6 +94,29 @@ def train(model, data):
     :param data: LUX RQ data, preprocessed
     :return: The total reward for the episode
     """
+    t = time.time()
+    print_counter = 0
+    
+    # Loop through inputs in model.batch_size increments
+    for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size), range(model.batch_size, inputs.shape[0], model.batch_size)):
+        
+        # Redefine batched inputs and labels
+        batch_inputs = inputs[start:end]
+        batch_labels = labels[start:end]
+        
+        with tf.GradientTape() as tape:
+            probabilities = model(batch_inputs, batch_labels)           # probability distribution for pulse classification
+            loss = model.loss_function(probabilities, batch_labels)     # loss of model
+
+        # Update
+        gradients = tape.gradient(loss, model.trainable_variables)
+        model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+        
+        # Print Current Progress
+        if start/inputs.shape[0] >= print_counter:
+            print_counter += 0.1                                                # Update print counter
+            accuracy = model.accuracy_function(probabilities, batch_labels)     # Get current model accuracy
+            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy))            
 
     return None
 
@@ -99,8 +196,18 @@ def main():
 
     print('[end file]')
 
+    # Define model
+    model = Model()
 
 
+    t = time.time()
+    # Train model
+    epochs = 1
+    for epoch in range(epochs):
+        train(model,inputs,labels)
+        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
+    
+    print('Testing Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format((time.time()-t)/60))#, accuracy))
 
 
 if __name__ == '__main__':
