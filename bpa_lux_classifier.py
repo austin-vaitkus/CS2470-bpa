@@ -102,9 +102,13 @@ def train(model, inputs, labels):
     t = time.time()
     print_counter = 0
     
+    accuracy = 0
+    batch_counter = 0
+
     # Loop through inputs in model.batch_size increments
     for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size), range(model.batch_size, inputs.shape[0], model.batch_size)):
-        
+        batch_counter += 1
+
         # Redefine batched inputs and labels
         batch_inputs = inputs[start:end]
         batch_labels = labels[start:end]
@@ -113,6 +117,7 @@ def train(model, inputs, labels):
             probabilities = model(batch_inputs)           # probability distribution for pulse classification
             loss = model.loss_function(probabilities, batch_labels)     # loss of model
 
+        accuracy += model.accuracy_function(probabilities, batch_labels)
         # Update
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
@@ -120,8 +125,8 @@ def train(model, inputs, labels):
         # Print Current Progress
         if start/inputs.shape[0] >= print_counter:
             print_counter += 0.1                                                # Update print counter
-            accuracy = model.accuracy_function(probabilities, batch_labels)     # Get current model accuracy
-            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy))            
+            accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
+            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
 
     return None
 
