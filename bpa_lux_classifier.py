@@ -234,14 +234,12 @@ def main():
 #    num_se = np.sum(pulse_classification == 3, axis=0)
 #    num_sphe = np.sum(pulse_classification == 4, axis=0)
 
-    
 
-    
 
- 
     # Pull data using preprocessing
-    pulse_rqs, labels, pulse_event_index = get_data(dataset_list, fields)
-    labels = labels - 1
+    train_rqs, train_labels, pulse_event_index, test_rqs, test_labels, test_event_index = get_data(dataset_list, fields)
+    train_labels = train_labels - 1
+    test_labels = test_labels - 1
 #%%
 #    print('pulse rq shape', pulse_rqs.shape)
 #    print('labels shape', labels.shape)
@@ -260,13 +258,10 @@ def main():
     # Train model
     epochs = 1
     for epoch in range(epochs):
-        train(model, pulse_rqs, labels)
+        train(model, train_rqs, train_labels)
         print('Epoch {} Complete. Total Time = {} minutes\n'.format(epoch+1, round((time.time()-t)/60,1)))#, accuracy))
 #        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
     
-    
-    test_rqs = pulse_rqs.copy()
-    test_labels = labels.copy()
     t = time.time()
     
     test_acc, test_loss = test(model, test_rqs, test_labels)
