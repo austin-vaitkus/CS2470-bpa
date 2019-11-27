@@ -28,7 +28,7 @@ class Model(tf.keras.Model):
         self.learning_rate = 1e-3
 
         # Model Layers
-#        self.dense1 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense1')
+        self.dense1 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense1')
         self.dense2 = tf.keras.layers.Dense(self.num_classes, dtype=tf.float32, name='dense2')
 
         # Initialize Optimizer
@@ -45,9 +45,9 @@ class Model(tf.keras.Model):
         """
         
         # Forward pass on inputs
-#        dense1_output = self.dense1(inputs)
-#        dense2_output = self.dense1(dense1_output)
-        dense2_output = self.dense2(inputs)
+        dense1_output = self.dense1(inputs)
+        dense2_output = self.dense2(dense1_output)
+        
         
         # Probabilities of each classification
         probabilities = tf.nn.softmax(dense2_output)
