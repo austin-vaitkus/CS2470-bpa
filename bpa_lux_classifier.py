@@ -29,9 +29,9 @@ class Model(tf.keras.Model):
         self.drop_rate = 0.1
 
         # Model Layers
-        self.dense1 = tf.keras.layers.Dense(self.num_classes*3, activation = 'relu', dtype=tf.float32, name='dense1')
-        self.dense2 = tf.keras.layers.Dense(self.num_classes*2, activation = 'relu', dtype=tf.float32, name='dense2')
-        self.dense3 = tf.keras.layers.Dense(self.num_classes*1, activation = 'relu', dtype=tf.float32, name='dense3')
+        self.dense1 = tf.keras.layers.Dense(self.num_classes*30, activation = 'relu', dtype=tf.float32, name='dense1')
+        self.dense2 = tf.keras.layers.Dense(self.num_classes*20, activation = 'relu', dtype=tf.float32, name='dense2')
+        self.dense3 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense3')
         self.dense4 = tf.keras.layers.Dense(self.num_classes, dtype=tf.float32, name='dense4')
 
         # Initialize Optimizer
@@ -48,10 +48,9 @@ class Model(tf.keras.Model):
         """
         
         # Forward pass on inputs
-        
-        dense1_output = tf.nn.dropout(self.dense1(inputs), self.drop_rate)
-        dense2_output = tf.nn.dropout(self.dense2(dense1_output), self.drop_rate)
-        dense3_output = tf.nn.dropout(self.dense3(dense2_output), self.drop_rate)
+        dense1_output = self.dense1(inputs)
+        dense2_output = self.dense2(dense1_output)
+        dense3_output = self.dense3(dense2_output)
         dense4_output = self.dense4(dense3_output)
         
         
@@ -131,6 +130,28 @@ def train(model, inputs, labels):
             print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
 
     return None
+
+def test(model, inputs, labels):
+    
+    batch_counter = 0
+    accuracy = 0
+    loss = 0
+    
+    for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size), 
+                          range(model.batch_size, inputs.shape[0], model.batch_size)):    
+        batch_counter += 1
+        
+        batch_inputs = inputs[start:end]
+        batch_labels = labels[start:end]
+        
+        probabilities = model(batch_inputs)
+        loss += model.loss_function(probabilities, batch_labels)
+        accuracy += model.accuracy_function(probabilities, batch_labels)
+        
+    loss /= batch_counter
+    accuracy /= batch_counter
+    
+    return accuracy, loss
 
 
 def main():
@@ -238,14 +259,19 @@ def main():
 
     t = time.time()
     # Train model
-    epochs = 3
+    epochs = 1
     for epoch in range(epochs):
         train(model, pulse_rqs, labels)
-        print('Epoch {0:1d} Complete. Total Time = {1:1.1f} minutes\n'.format(epoch, (time.time()-t)/60))#, accuracy))
+        print('Epoch {} Complete. Total Time = {} minutes\n'.format(epoch+1, round((time.time()-t)/60,1)))#, accuracy))
 #        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
     
-    print('Testing Complete. Total Time = {0:1.1f} minutes\n'.format((time.time()-t)/60))#, accuracy))
-#    print('Testing Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format((time.time()-t)/60))#, accuracy))
+    
+    test_rqs = pulse_rqs.copy()
+    test_labels = labels.copy()
+    t = time.time()
+    
+    test_acc, test_loss = test(model, test_rqs, test_labels)
+    print('Testing Complete. Testing Time = {0:1.1f} minutes\nTesting Accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
 
 
 if __name__ == '__main__':
