@@ -26,11 +26,12 @@ class Model(tf.keras.Model):
         self.batch_size = 10
         self.num_classes = 5
         self.learning_rate = 1e-3
+        self.drop_rate = 0.1
 
         # Model Layers
-        self.dense1 = tf.keras.layers.Dense(self.num_classes*30, activation = 'relu', dtype=tf.float32, name='dense1')
-        self.dense2 = tf.keras.layers.Dense(self.num_classes*20, activation = 'relu', dtype=tf.float32, name='dense2')
-        self.dense3 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense3')
+        self.dense1 = tf.keras.layers.Dense(self.num_classes*3, activation = 'relu', dtype=tf.float32, name='dense1')
+        self.dense2 = tf.keras.layers.Dense(self.num_classes*2, activation = 'relu', dtype=tf.float32, name='dense2')
+        self.dense3 = tf.keras.layers.Dense(self.num_classes*1, activation = 'relu', dtype=tf.float32, name='dense3')
         self.dense4 = tf.keras.layers.Dense(self.num_classes, dtype=tf.float32, name='dense4')
 
         # Initialize Optimizer
@@ -47,9 +48,10 @@ class Model(tf.keras.Model):
         """
         
         # Forward pass on inputs
-        dense1_output = self.dense1(inputs)
-        dense2_output = self.dense2(dense1_output)
-        dense3_output = self.dense3(dense2_output)
+        
+        dense1_output = tf.nn.dropout(self.dense1(inputs), self.drop_rate)
+        dense2_output = tf.nn.dropout(self.dense2(dense1_output), self.drop_rate)
+        dense3_output = tf.nn.dropout(self.dense3(dense2_output), self.drop_rate)
         dense4_output = self.dense4(dense3_output)
         
         
@@ -236,10 +238,10 @@ def main():
 
     t = time.time()
     # Train model
-    epochs = 1
+    epochs = 3
     for epoch in range(epochs):
         train(model, pulse_rqs, labels)
-        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n'.format(epoch, (time.time()-t)/60))#, accuracy))
+        print('Epoch {0:1d} Complete. Total Time = {1:1.1f} minutes\n'.format(epoch, (time.time()-t)/60))#, accuracy))
 #        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
     
     print('Testing Complete. Total Time = {0:1.1f} minutes\n'.format((time.time()-t)/60))#, accuracy))
