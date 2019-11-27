@@ -7,7 +7,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import aLib
 from aLib import dp
-from preprocess import *
+from preprocess import get_data
 
 
 ###################################
@@ -28,7 +28,7 @@ class Model(tf.keras.Model):
         self.learning_rate = 1e-3
 
         # Model Layers
-        self.dense1 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense1')
+#        self.dense1 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense1')
         self.dense2 = tf.keras.layers.Dense(self.num_classes, dtype=tf.float32, name='dense2')
 
         # Initialize Optimizer
@@ -45,8 +45,9 @@ class Model(tf.keras.Model):
         """
         
         # Forward pass on inputs
-        dense1_output = self.dense1(inputs)
-        dense2_output = self.dense1(dense1_output)
+#        dense1_output = self.dense1(inputs)
+#        dense2_output = self.dense1(dense1_output)
+        dense2_output = self.dense2(inputs)
         
         # Probabilities of each classification
         probabilities = tf.nn.softmax(dense2_output)
@@ -75,7 +76,7 @@ class Model(tf.keras.Model):
         
 		:return: model accuracy as scalar tensor
 		"""
-        correct_predictions = tf.equal(tf.argmax(probabilities, 1), tf.argmax(labels, 1))
+        correct_predictions = tf.equal(tf.argmax(probabilities, 1), labels)
         return(tf.reduce_mean(tf.cast(correct_predictions, dtype = tf.float32)))
 
 
@@ -105,7 +106,7 @@ def train(model, inputs, labels):
         batch_labels = labels[start:end]
         
         with tf.GradientTape() as tape:
-            probabilities = model(batch_inputs, batch_labels)           # probability distribution for pulse classification
+            probabilities = model(batch_inputs)           # probability distribution for pulse classification
             loss = model.loss_function(probabilities, batch_labels)     # loss of model
 
         # Update
@@ -123,6 +124,7 @@ def train(model, inputs, labels):
 
 def main():
 
+#%%    
     # dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
     #dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
     dataset_list = ['lux10_20130425T1047'] # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
@@ -178,23 +180,35 @@ def main():
                   ]
                   
 
-    rq = get_data(dataset_list, fields)
-    print('All RQs loaded!')
-
-    # Create some variables for ease of broad event classification and population checking.
-    pulse_classification = rq[0].pulse_classification
-    num_pulses = np.sum(pulse_classification > 0, axis=0)
-    num_S1s = np.sum(pulse_classification == 1,axis=0)
-    num_S2s = np.sum(pulse_classification == 2,axis=0)
-    num_se = np.sum(pulse_classification == 3, axis=0)
-    num_sphe = np.sum(pulse_classification == 4, axis=0)
-
-
-
-
-
+#    rq = get_data(dataset_list, fields)
+#    print('All RQs loaded!')
+#
+#    # Create some variables for ease of broad event classification and population checking.
+#    pulse_classification = rq[0].pulse_classification
+#    num_pulses = np.sum(pulse_classification > 0, axis=0)
+#    num_S1s = np.sum(pulse_classification == 1,axis=0)
+#    num_S2s = np.sum(pulse_classification == 2,axis=0)
+#    num_se = np.sum(pulse_classification == 3, axis=0)
+#    num_sphe = np.sum(pulse_classification == 4, axis=0)
     print('[end file]')
 
+
+
+
+ 
+    # Pull data using preprocessing
+    pulse_rqs, labels, pulse_event_index = get_data(dataset_list, fields)
+    labels = labels - 1
+#%%
+    print('pulse rq shape', pulse_rqs.shape)
+    print('labels shape', labels.shape)
+    print('pulse event index shape', pulse_event_index.shape)
+    
+    print('labels',labels[:,0])   
+    print(pulse_event_index[0:11])
+    print(pulse_rqs[0].shape)
+    
+#%%
     # Define model
     model = Model()
 
@@ -203,7 +217,7 @@ def main():
     # Train model
     epochs = 1
     for epoch in range(epochs):
-        train(model,inputs,labels)
+        train(model, pulse_rqs, labels)
         print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
     
     print('Testing Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format((time.time()-t)/60))#, accuracy))
