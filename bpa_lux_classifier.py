@@ -152,14 +152,14 @@ def test(model, inputs, labels):
     loss /= batch_counter
     accuracy /= batch_counter
     
-    return accuracy, loss
+    return accuracy#, loss
 
 
 def main():
 
 #%%    
-#    dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
-#    dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
+    # dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
+    #dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
     dataset_list = ['lux10_20130425T1047'] # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
 
     # Generic pulse finding RQs
@@ -255,7 +255,6 @@ def main():
         test_acc, test_loss = test(model, test_rqs, test_labels)
         print('Epoch {0:d} Complete.\nTotal Time = {1:2.1f} minutes. Accuracy = {2:.0%}, Loss = {3:2.1f}\n'.format(epoch+1, round((time.time()-t)/60,1), test_acc, test_loss))
 
-    print('Training finished in {0:1.1f} minutes with final accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
 
 
 if __name__ == '__main__':
