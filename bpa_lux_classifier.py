@@ -28,9 +28,9 @@ class Model(tf.keras.Model):
         self.learning_rate = 1e-3
 
         # Model Layers
-        self.dense1 = tf.keras.layers.Dense(self.num_classes*30, activation = 'relu', dtype=tf.float32, name='dense1')
-        self.dense2 = tf.keras.layers.Dense(self.num_classes*20, activation = 'relu', dtype=tf.float32, name='dense2')
-        self.dense3 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense3')
+        self.dense1 = tf.keras.layers.Dense(self.num_classes*3, activation = 'relu', dtype=tf.float32, name='dense1')
+        self.dense2 = tf.keras.layers.Dense(self.num_classes*2, activation = 'relu', dtype=tf.float32, name='dense2')
+        self.dense3 = tf.keras.layers.Dense(self.num_classes*1, activation = 'relu', dtype=tf.float32, name='dense3')
         self.dense4 = tf.keras.layers.Dense(self.num_classes, dtype=tf.float32, name='dense4')
 
         # Initialize Optimizer
@@ -47,6 +47,7 @@ class Model(tf.keras.Model):
         """
         
         # Forward pass on inputs
+        
         dense1_output = self.dense1(inputs)
         dense2_output = self.dense2(dense1_output)
         dense3_output = self.dense3(dense2_output)
