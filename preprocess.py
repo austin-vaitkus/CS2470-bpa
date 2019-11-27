@@ -44,7 +44,7 @@ def get_data(dataset_list, fields):
     pulse_rqs = np.zeros(shape=[num_pulses_with_blanks, num_pulse_rqs])
     for i in range(num_pulse_rqs):
         pulse_rq_name = pulse_rq_list[i]
-        pulse_rqs[:,i] = np.reshape(a=rq[pulse_rq_name].T, newshape=[1,-1])#/np.max(abs(rq[pulse_rq_name]))
+        pulse_rqs[:,i] = np.reshape(a=rq[pulse_rq_name].T, newshape=[1,-1])/np.max(abs(rq[pulse_rq_name]))
 
     # Remove pulses from the RQ block that are empty pulses (pulse_classification==0)
     # Locate where pulses are empty

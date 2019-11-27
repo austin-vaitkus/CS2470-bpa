@@ -254,7 +254,7 @@ def main():
 
     t = time.time()
     # Train model
-    epochs = 3
+    epochs = 10
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
         test_acc = test(model, test_rqs, test_labels)
