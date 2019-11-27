@@ -97,20 +97,25 @@ def train(model, inputs, labels):
     t = time.time()
     print_counter = 0
     
+    # Loop through inputs in model.batch_size increments
     for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size), range(model.batch_size, inputs.shape[0], model.batch_size)):
+        
+        # Redefine batched inputs and labels
         batch_inputs = inputs[start:end]
         batch_labels = labels[start:end]
         
         with tf.GradientTape() as tape:
-            probabilities = model(batch_inputs, batch_labels)
-            loss = model.loss_function(probabilities, batch_labels)
+            probabilities = model(batch_inputs, batch_labels)           # probability distribution for pulse classification
+            loss = model.loss_function(probabilities, batch_labels)     # loss of model
 
+        # Update
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         
+        # Print Current Progress
         if start/inputs.shape[0] >= print_counter:
-            print_counter += 0.1
-            accuracy = model.accuracy_function(probabilities, batch_labels)
+            print_counter += 0.1                                                # Update print counter
+            accuracy = model.accuracy_function(probabilities, batch_labels)     # Get current model accuracy
             print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy))            
 
     return None
@@ -181,8 +186,18 @@ def main():
 
     print('[end file]')
 
+    # Define model
+    model = Model()
 
 
+    t = time.time()
+    # Train model
+    epochs = 1
+    for epoch in range(epochs):
+        train(model,inputs,labels)
+        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
+    
+    print('Testing Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format((time.time()-t)/60))#, accuracy))
 
 
 if __name__ == '__main__':
