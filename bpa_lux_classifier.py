@@ -109,6 +109,7 @@ def train(model, inputs, labels):
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         
         if start/inputs.shape[0] >= print_counter:
+            print_counter += 0.1
             accuracy = model.accuracy_function(probabilities, batch_labels)
             print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy))            
 
