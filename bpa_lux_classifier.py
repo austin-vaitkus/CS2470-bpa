@@ -23,7 +23,7 @@ class Model(tf.keras.Model):
         super(Model, self).__init__()
         
         # Model Hyperparameters
-        self.batch_size = 10
+        self.batch_size = 64
         self.num_classes = 5
         self.learning_rate = 2e-3
         self.drop_rate = 0.1
@@ -117,18 +117,18 @@ def train(model, inputs, labels):
         
         with tf.GradientTape() as tape:
             probabilities = model(batch_inputs)           # probability distribution for pulse classification
-            loss = model.loss_function(probabilities, batch_labels)     # loss of model
+            loss = model.loss_function(probabilities, batch_labels)          # loss of model
 
         accuracy += model.accuracy_function(probabilities, batch_labels)
         # Update
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         
-        # Print Current Progress
-        if start/inputs.shape[0] >= print_counter:
-            print_counter += 0.1                                                # Update print counter
-            accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
-            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
+#        # Print Current Progress
+#        if start/inputs.shape[0] >= print_counter:
+#            print_counter += 0.1                                                # Update print counter
+#            accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
+#            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
 
     return None
 
@@ -158,9 +158,9 @@ def test(model, inputs, labels):
 def main():
 
 #%%    
-    # dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
-    dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
-    #dataset_list = ['lux10_20130425T1047'] # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
+#    dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
+#    dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
+    dataset_list = ['lux10_20130425T1047'] # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
 
     # Generic pulse finding RQs
     # fields = ["pulse_area_phe", "luxstamp_samples", "pulse_classification",
@@ -243,16 +243,6 @@ def main():
     train_labels = train_labels - 1
     test_labels = test_labels - 1
 
-#%%
-#    print('pulse rq shape', pulse_rqs.shape)
-#    print('labels shape', labels.shape)
-#    print('pulse event index shape', pulse_event_index.shape)
-    
-#    print('labels',labels[:,0])   
-#    print(pulse_event_index[0:11])
-#    print(pulse_rqs[0].shape)
-    
-#%%
     # Define model
     model = Model()
 
@@ -263,7 +253,7 @@ def main():
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
         test_acc, test_loss = test(model, test_rqs, test_labels)
-        print('Epoch {0:d} Complete. Total Time = {1:2.1f} minutes\nTesting Accuracy = {2:.0%}, Testing Loss = {3:2.1f}\n'.format(epoch+1, round((time.time()-t)/60,1), test_acc, test_loss))
+        print('Epoch {0:d} Complete.\nTotal Time = {1:2.1f} minutes. Accuracy = {2:.0%}, Loss = {3:2.1f}\n'.format(epoch+1, round((time.time()-t)/60,1), test_acc, test_loss))
 
     print('Training finished in {0:1.1f} minutes with final accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
 
