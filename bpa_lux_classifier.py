@@ -23,7 +23,7 @@ class Model(tf.keras.Model):
         super(Model, self).__init__()
         
         # Model Hyperparameters
-        self.batch_size = 10
+        self.batch_size = 50
         self.num_classes = 4
         self.learning_rate = 2e-3
         self.drop_rate = 0.1
