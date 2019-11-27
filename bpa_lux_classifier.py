@@ -150,15 +150,15 @@ def test(model, inputs, labels):
     loss /= batch_counter
     accuracy /= batch_counter
     
-    return accuracy, loss
+    return accuracy#, loss
 
 
 def main():
 
 #%%    
     # dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
-    dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
-    #dataset_list = ['lux10_20130425T1047'] # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
+    #dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
+    dataset_list = ['lux10_20130425T1047'] # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
 
     # Generic pulse finding RQs
     # fields = ["pulse_area_phe", "luxstamp_samples", "pulse_classification",
@@ -167,7 +167,7 @@ def main():
     #           "event_timestamp_samples", 'file_number']
 
     # Decide which RQs to use. 1 for original LPC (1-to-1 comparison) vs 2 for larger list of RQs.
-    RQ_list_switch = 2
+    RQ_list_switch = 1
     if RQ_list_switch == 1:
         #Below: RQs used by the standard LUX Pulse Classifier
         fields = ['pulse_area_phe',  # OG LPC
@@ -259,13 +259,11 @@ def main():
     epochs = 1
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
-        print('Epoch {} Complete. Total Time = {} minutes\n'.format(epoch+1, round((time.time()-t)/60,1)))#, accuracy))
-#        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
-    
-    t = time.time()
-    
-    test_acc, test_loss = test(model, test_rqs, test_labels)
-    print('Testing Complete. Testing Time = {0:1.1f} minutes\nTesting Accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
+        acc = test(model,test_rqs, test_labels)
+        print('Epoch %1.0i Complete. Total Time = %1.1f minutes. Test Accuracy = %2.0i%% \n'%(epoch+1, round((time.time()-t)/60,1), acc*100))
+
+    test_acc = test(model, test_rqs, test_labels)
+    print('Testing Complete.Testing Accuracy = %2.0i%%'%(test_acc*100))
 
 
 if __name__ == '__main__':
