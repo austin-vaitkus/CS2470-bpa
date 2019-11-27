@@ -28,8 +28,11 @@ class Model(tf.keras.Model):
         self.learning_rate = 1e-3
 
         # Model Layers
-        self.dense1 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense1')
-        self.dense2 = tf.keras.layers.Dense(self.num_classes, dtype=tf.float32, name='dense2')
+        self.dense0 = tf.keras.layers.Dense(self.num_classes*40, activation = 'relu', dtype=tf.float32, name='dense0')
+        self.dense1 = tf.keras.layers.Dense(self.num_classes*30, activation = 'relu', dtype=tf.float32, name='dense1')
+        self.dense2 = tf.keras.layers.Dense(self.num_classes*20, activation = 'relu', dtype=tf.float32, name='dense2')
+        self.dense3 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense3')
+        self.dense4 = tf.keras.layers.Dense(self.num_classes, dtype=tf.float32, name='dense4')
 
         # Initialize Optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate = self.learning_rate)
@@ -45,12 +48,15 @@ class Model(tf.keras.Model):
         """
         
         # Forward pass on inputs
-        dense1_output = self.dense1(inputs)
+        dense0_output = self.dense0(inputs)
+        dense1_output = self.dense1(dense0_output)
         dense2_output = self.dense2(dense1_output)
+        dense3_output = self.dense3(dense2_output)
+        dense4_output = self.dense4(dense3_output)
         
         
         # Probabilities of each classification
-        probabilities = tf.nn.softmax(dense2_output)
+        probabilities = tf.nn.softmax(dense4_output)
 
         return(probabilities)
 
