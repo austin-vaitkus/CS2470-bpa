@@ -24,7 +24,7 @@ class Model(tf.keras.Model):
         
         # Model Hyperparameters
         self.batch_size = 10
-        self.num_classes = 5
+        self.num_classes = 4
         self.learning_rate = 2e-3
         self.drop_rate = 0.1
 
@@ -126,7 +126,7 @@ def train(model, inputs, labels):
         
         # Print Current Progress
         if start/inputs.shape[0] >= print_counter:
-            print_counter += 0.1                                                # Update print counter
+            print_counter += 0.2                                                # Update print counter
             accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
             print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
 
@@ -169,7 +169,7 @@ def main():
     #           "event_timestamp_samples", 'file_number']
 
     # Decide which RQs to use. 1 for original LPC (1-to-1 comparison) vs 2 for larger list of RQs.
-    RQ_list_switch = 2
+    RQ_list_switch = 1
     if RQ_list_switch == 1:
         #Below: RQs used by the standard LUX Pulse Classifier
         fields = ['pulse_area_phe',  # OG LPC
@@ -259,7 +259,7 @@ def main():
 
     t = time.time()
     # Train model
-    epochs = 1
+    epochs = 10
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
         acc = test(model,test_rqs, test_labels)
