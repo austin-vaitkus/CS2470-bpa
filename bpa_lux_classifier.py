@@ -181,7 +181,6 @@ def main():
                   ]
                   
 
-<<<<<<< HEAD
 #    rq = get_data(dataset_list, fields)
 #    print('All RQs loaded!')
 #
@@ -193,20 +192,18 @@ def main():
 #    num_se = np.sum(pulse_classification == 3, axis=0)
 #    num_sphe = np.sum(pulse_classification == 4, axis=0)
     print('[end file]')
-=======
-    rqs, labels, pulse_event_index  = get_data(dataset_list, fields)
+#    rqs, labels, pulse_event_index  = get_data(dataset_list, fields)
     print('All RQs loaded!')
 
     # Create some variables for ease of broad event classification and population checking.
-    pulse_classification = labels
-    num_pulses = np.sum(pulse_classification > 0, axis=0)
-    num_S1s = np.sum(pulse_classification == 1,axis=0)
-    num_S2s = np.sum(pulse_classification == 2,axis=0)
-    num_se = np.sum(pulse_classification == 3, axis=0)
-    num_sphe = np.sum(pulse_classification == 4, axis=0)
+#    pulse_classification = labels
+#    num_pulses = np.sum(pulse_classification > 0, axis=0)
+#    num_S1s = np.sum(pulse_classification == 1,axis=0)
+#    num_S2s = np.sum(pulse_classification == 2,axis=0)
+#    num_se = np.sum(pulse_classification == 3, axis=0)
+#    num_sphe = np.sum(pulse_classification == 4, axis=0)
 
     
->>>>>>> 33d24d5701f1d2dec2a7c1e0fcb841a46a624d35
 
     
 
