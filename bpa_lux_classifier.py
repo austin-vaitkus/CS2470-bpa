@@ -263,9 +263,9 @@ def main():
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
         test_acc, test_loss = test(model, test_rqs, test_labels)
-        print('Epoch {0:d} Complete. Total Time = {1:2.1f} minutes\nTesting Accuracy = {2:.0%}, Testing Loss = {3:2.1f}'.format(epoch+1, round((time.time()-t)/60,1), test_acc, test_loss))
+        print('Epoch {0:d} Complete. Total Time = {1:2.1f} minutes\nTesting Accuracy = {2:.0%}, Testing Loss = {3:2.1f}\n'.format(epoch+1, round((time.time()-t)/60,1), test_acc, test_loss))
 
-    print('Testing Complete. Testing Time = {0:1.1f} minutes\nTesting Accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
+    print('Training finished in {0:1.1f} minutes with final accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
 
 
 if __name__ == '__main__':
