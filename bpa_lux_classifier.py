@@ -15,10 +15,7 @@ from preprocess import get_data
 class Model(tf.keras.Model):
     def __init__(self):
         """
-        This model class will contain the architecture for your CNN that 
-		classifies images. Do not modify the constructor, as doing so 
-		will break the autograder. We have left in variables in the constructor
-		for you to fill out, but you are welcome to change them if you'd like.
+        Model architecture for pulse classification. Contains forward pass, accuracy, and loss.
 		"""
         super(Model, self).__init__()
         
@@ -121,11 +118,11 @@ def train(model, inputs, labels):
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         
-        # Print Current Progress
-        if start/inputs.shape[0] >= print_counter:
-            print_counter += 0.2                                                # Update print counter
-            accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
-            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
+#        # Print Current Progress
+#        if start/inputs.shape[0] >= print_counter:
+#            print_counter += 0.2                                                # Update print counter
+#            accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
+#            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
 
     return None
 
@@ -247,7 +244,8 @@ def main():
     
 #    print('labels',labels[:,0])   
 #    print(pulse_event_index[0:11])
-#    print(pulse_rqs[0].shape)
+    print((train_rqs[80:81]))
+    print((test_rqs == - 999999).sum())
     
 #%%
     # Define model
