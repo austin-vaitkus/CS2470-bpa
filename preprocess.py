@@ -23,6 +23,7 @@ def get_data(dataset_list, fields):
 
     # Break apart events into pulses, then compile these into a list while assigning them an event index for later association when we look at event structures.
 
+    test_set_fraction = 0.1 #  Fraction of events to separate out as a test set.
     num_pulses_per_event = 10
     num_events = rq['pulse_classification'].shape[1]
     num_pulses_with_blanks = num_events * num_pulses_per_event
