@@ -118,11 +118,11 @@ def train(model, inputs, labels):
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         
-#        # Print Current Progress
-#        if start/inputs.shape[0] >= print_counter:
-#            print_counter += 0.2                                                # Update print counter
-#            accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
-#            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
+        # Print Current Progress
+        if start/inputs.shape[0] >= print_counter:
+            print_counter += 0.2                                                # Update print counter
+            accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
+            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
 
     return None
 
@@ -244,8 +244,8 @@ def main():
     
 #    print('labels',labels[:,0])   
 #    print(pulse_event_index[0:11])
-    print((train_rqs[80:81]))
-    print((test_rqs == - 999999).sum())
+    # print((train_rqs[80:81]))
+    # print((test_rqs == - 999999).sum())
     
 #%%
     # Define model
@@ -258,7 +258,7 @@ def main():
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
         test_acc = test(model, test_rqs, test_labels)
-        print('Epoch {0:d} Complete.\nTotal Time = {1:2.1f} minutes. Accuracy = {2:.0%}'.format(epoch+1, round((time.time()-t)/60,1), test_acc))
+        print('Epoch %1.0i Complete.\nTotal Time = %2.1f minutes. Testing Accuracy = %2.0i%%'%(epoch+1, round((time.time()-t)/60,1), test_acc*100))
 
 
 
