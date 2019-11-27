@@ -26,6 +26,7 @@ class Model(tf.keras.Model):
         self.batch_size = 10
         self.num_classes = 5
         self.learning_rate = 1e-3
+        self.drop_rate = 0.1
 
         # Model Layers
         self.dense1 = tf.keras.layers.Dense(self.num_classes*3, activation = 'relu', dtype=tf.float32, name='dense1')
@@ -48,9 +49,9 @@ class Model(tf.keras.Model):
         
         # Forward pass on inputs
         
-        dense1_output = self.dense1(inputs)
-        dense2_output = self.dense2(dense1_output)
-        dense3_output = self.dense3(dense2_output)
+        dense1_output = tf.nn.dropout(self.dense1(inputs), self.drop_rate)
+        dense2_output = tf.nn.dropout(self.dense2(dense1_output), self.drop_rate)
+        dense3_output = tf.nn.dropout(self.dense3(dense2_output), self.drop_rate)
         dense4_output = self.dense4(dense3_output)
         
         
