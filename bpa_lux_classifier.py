@@ -152,7 +152,7 @@ def test(model, inputs, labels):
     loss /= batch_counter
     accuracy /= batch_counter
     
-    return accuracy, loss
+    return accuracy#, loss
 
 
 def main():
@@ -262,10 +262,12 @@ def main():
     epochs = 1
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
-        test_acc, test_loss = test(model, test_rqs, test_labels)
-        print('Epoch {0:d} Complete. Total Time = {1:2.1f} minutes\nTesting Accuracy = {2:.0%}, Testing Loss = {3:2.1f}\n'.format(epoch+1, round((time.time()-t)/60,1), test_acc, test_loss))
+        acc = test(model,test_rqs, test_labels)
+        print('Epoch %1.0i Complete. Total Time = %1.1f minutes. Test Accuracy = %2.0i%% \n'%(epoch+1, round((time.time()-t)/60,1), acc*100))
 
-    print('Training finished in {0:1.1f} minutes with final accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
+    test_acc = test(model, test_rqs, test_labels)
+    print('Testing Complete.Testing Accuracy = %2.0i%%'%(test_acc*100))
+
 
 
 if __name__ == '__main__':
