@@ -25,7 +25,7 @@ class Model(tf.keras.Model):
         # Model Hyperparameters
         self.batch_size = 10
         self.num_classes = 5
-        self.learning_rate = 1e-3
+        self.learning_rate = 2e-3
         self.drop_rate = 0.1
 
         # Model Layers
