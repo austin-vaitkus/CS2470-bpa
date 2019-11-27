@@ -29,9 +29,9 @@ class Model(tf.keras.Model):
         self.drop_rate = 0.1
 
         # Model Layers
-        self.dense1 = tf.keras.layers.Dense(self.num_classes*30, activation = 'relu', dtype=tf.float32, name='dense1')
-        self.dense2 = tf.keras.layers.Dense(self.num_classes*20, activation = 'relu', dtype=tf.float32, name='dense2')
-        self.dense3 = tf.keras.layers.Dense(self.num_classes*10, activation = 'relu', dtype=tf.float32, name='dense3')
+        self.dense1 = tf.keras.layers.Dense(self.num_classes*4, activation = 'relu', dtype=tf.float32, name='dense1')
+        self.dense2 = tf.keras.layers.Dense(self.num_classes*3, activation = 'relu', dtype=tf.float32, name='dense2')
+        self.dense3 = tf.keras.layers.Dense(self.num_classes*2, activation = 'relu', dtype=tf.float32, name='dense3')
         self.dense4 = tf.keras.layers.Dense(self.num_classes, dtype=tf.float32, name='dense4')
 
         # Initialize Optimizer
@@ -85,9 +85,6 @@ class Model(tf.keras.Model):
         return(tf.reduce_mean(tf.cast(correct_predictions, dtype = tf.float32)))
 
 
-
-
-################################
 
 def train(model, inputs, labels):
     """
@@ -249,11 +246,11 @@ def main():
 
     t = time.time()
     # Train model
-    epochs = 1
+    epochs = 3
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
-        test_acc, test_loss = test(model, test_rqs, test_labels)
-        print('Epoch {0:d} Complete.\nTotal Time = {1:2.1f} minutes. Accuracy = {2:.0%}, Loss = {3:2.1f}\n'.format(epoch+1, round((time.time()-t)/60,1), test_acc, test_loss))
+        test_acc = test(model, test_rqs, test_labels)
+        print('Epoch {0:d} Complete.\nTotal Time = {1:2.1f} minutes. Accuracy = {2:.0%}'.format(epoch+1, round((time.time()-t)/60,1), test_acc))
 
 
 
