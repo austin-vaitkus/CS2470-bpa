@@ -241,7 +241,7 @@ def main():
     epochs = 3
     for epoch in range(epochs):
         train(model, pulse_rqs, labels)
-        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n'.format(epoch, (time.time()-t)/60))#, accuracy))
+        print('Epoch {0:1d} Complete. Total Time = {1:1.1f} minutes\n'.format(epoch, (time.time()-t)/60))#, accuracy))
 #        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
     
     print('Testing Complete. Total Time = {0:1.1f} minutes\n'.format((time.time()-t)/60))#, accuracy))
