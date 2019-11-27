@@ -237,7 +237,7 @@ def main():
 
     t = time.time()
     # Train model
-    epochs = 1
+    epochs = 10
     for epoch in range(epochs):
         train(model, pulse_rqs, labels)
         print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n'.format(epoch, (time.time()-t)/60))#, accuracy))
