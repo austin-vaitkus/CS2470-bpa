@@ -159,8 +159,8 @@ def main():
 
 #%%    
     # dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
-    dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
-    #dataset_list = ['lux10_20130425T1047'] # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
+    #dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
+    dataset_list = ['lux10_20130425T1047'] # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
 
     # Generic pulse finding RQs
     # fields = ["pulse_area_phe", "luxstamp_samples", "pulse_classification",
