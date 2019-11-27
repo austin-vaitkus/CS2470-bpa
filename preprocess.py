@@ -23,6 +23,7 @@ def get_data(dataset_list, fields):
 
     # Break apart events into pulses, then compile these into a list while assigning them an event index for later association when we look at event structures.
 
+    test_set_fraction = 0.1
     num_pulses_per_event = 10
     num_events = rq['pulse_classification'].shape[1]
     num_pulses_with_blanks = num_events * num_pulses_per_event
@@ -61,5 +62,26 @@ def get_data(dataset_list, fields):
     pulse_rqs = np.delete(arr=pulse_rqs, obj=empty_pulse_index, axis=0)
     labels = np.delete(arr=labels, obj=empty_pulse_index, axis=0)
     pulse_event_index = np.delete(arr=pulse_event_index, obj=empty_pulse_index, axis=0)
+
+    num_real_pulses = len(labels)
+
+
+    # Shuffle the three arrays on the same indexing
+    shuffle_index = np.arange(num_real_pulses)
+    np.random.shuffle(shuffle_index)
+    pulse_rqs = pulse_rqs[shuffle_index,:]
+    labels = labels[shuffle_index]
+    pulse_event_index = pulse_event_index[shuffle_index]
+
+    # Separate out training and test data. TODO: Makes sure to split cleanly on an event so we don't have events split between the two sets
+    split_index = int(test_set_fraction*num_real_pulses)
+    test_rqs = pulse_rqs[:split_index]
+    test_labels = labels[:split_index]
+    test_pulse_event_index = pulse_event_index[:split_index]
+
+    train_rqs = pulse_rqs[split_index:]
+    train_labels = labels[split_index:]
+    train_pulse_event_index = pulse_event_index[split_index:]
+
     print('Pulse RQ data block pre-processed')
-    return pulse_rqs, labels, pulse_event_index
+    return train_rqs, train_labels, train_pulse_event_index, test_rqs, test_labels, test_pulse_event_index

@@ -236,20 +236,12 @@ def main():
 #    num_se = np.sum(pulse_classification == 3, axis=0)
 #    num_sphe = np.sum(pulse_classification == 4, axis=0)
 
-    
 
-    
 
- 
     # Pull data using preprocessing
-    pulse_rqs, labels, pulse_event_index = get_data(dataset_list, fields)
-    labels = labels - 1
-
-    # Separate Testing and Training sets
-    train_rqs = pulse_rqs[:int(pulse_rqs.shape[0]*0.9)]
-    train_labels = labels[:int(pulse_rqs.shape[0]*0.9)]
-    test_rqs = pulse_rqs[int(pulse_rqs.shape[0]*0.9):]
-    test_labels = labels[int(pulse_rqs.shape[0]*0.9):]
+    train_rqs, train_labels, pulse_event_index, test_rqs, test_labels, test_event_index = get_data(dataset_list, fields)
+    train_labels = train_labels - 1
+    test_labels = test_labels - 1
 
 #%%
 #    print('pulse rq shape', pulse_rqs.shape)
@@ -272,6 +264,8 @@ def main():
         train(model, train_rqs, train_labels)
         test_acc, test_loss = test(model, test_rqs, test_labels)
         print('Epoch {0:d} Complete. Total Time = {1:2.1f} minutes\nTesting Accuracy = {2:.0%}, Testing Loss = {3:2.1f}'.format(epoch+1, round((time.time()-t)/60,1), test_acc, test_loss))
+
+    print('Testing Complete. Testing Time = {0:1.1f} minutes\nTesting Accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
 
 
 if __name__ == '__main__':
