@@ -107,7 +107,8 @@ def train(model, inputs, labels):
     batch_counter = 0
 
     # Loop through inputs in model.batch_size increments
-    for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size), range(model.batch_size, inputs.shape[0], model.batch_size)):
+    for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size),
+                          range(model.batch_size, inputs.shape[0], model.batch_size)):
         batch_counter += 1
 
         # Redefine batched inputs and labels
@@ -243,6 +244,13 @@ def main():
     # Pull data using preprocessing
     pulse_rqs, labels, pulse_event_index = get_data(dataset_list, fields)
     labels = labels - 1
+
+    # Separate Testing and Training sets
+    train_rqs = pulse_rqs[:int(pulse_rqs.shape[0]*0.9)]
+    train_labels = labels[:int(pulse_rqs.shape[0]*0.9)]
+    test_rqs = pulse_rqs[int(pulse_rqs.shape[0]*0.9):]
+    test_labels = labels[int(pulse_rqs.shape[0]*0.9):]
+
 #%%
 #    print('pulse rq shape', pulse_rqs.shape)
 #    print('labels shape', labels.shape)
@@ -261,17 +269,9 @@ def main():
     # Train model
     epochs = 1
     for epoch in range(epochs):
-        train(model, pulse_rqs, labels)
-        print('Epoch {} Complete. Total Time = {} minutes\n'.format(epoch+1, round((time.time()-t)/60,1)))#, accuracy))
-#        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
-    
-    
-    test_rqs = pulse_rqs.copy()
-    test_labels = labels.copy()
-    t = time.time()
-    
-    test_acc, test_loss = test(model, test_rqs, test_labels)
-    print('Testing Complete. Testing Time = {0:1.1f} minutes\nTesting Accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
+        train(model, train_rqs, train_labels)
+        test_acc, test_loss = test(model, test_rqs, test_labels)
+        print('Epoch {0:d} Complete. Total Time = {1:2.1f} minutes\nTesting Accuracy = {2:.0%}, Testing Loss = {3:2.1f}'.format(epoch+1, round((time.time()-t)/60,1), test_acc, test_loss))
 
 
 if __name__ == '__main__':
