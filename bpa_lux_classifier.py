@@ -153,21 +153,30 @@ def main():
                     'pulse_classification']
     elif RQ_list_switch == 2:
         # RQs used by the standard LUX Pulse Classifier + Additional ones for better performance
+        # Currently up-to-date with google sheets list as of 112719T1206
         fields = ['pulse_area_phe',  # OG LPC
                   'luxstamp_samples',  # OG LPC
                   's2filter_max_area_diff',  # OG LPC
                   'prompt_fraction_tlx',  # OG LPC
                   'top_bottom_asymmetry',  # OG LPC
                   'aft_t0_samples',  # OG LPC
+                  'aft_t05_samples',
+                  'aft_t25_samples',
                   'aft_t1_samples',  # OG LPC
+                  'aft_t75_samples',
+                  'aft_t95_samples',
                   'aft_t2_samples',  # OG LPC
                   'peak_height_phe_per_sample',  # OG LPC
                   'skinny_peak_area_phe',  # OG LPC
                   'prompt_fraction',  # OG LPC
                   'pulse_height_phe_per_sample',  # OG LPC
+                  'cor_x_cm',
+                  'cor_y_cm',
                   'file_number',  # OG LPC
-                  'pulse_classification']
-                    #  ADD MORE RQs HERE
+                  'pulse_classification',
+                  #  ADD MORE RQs HERE 
+                  ]
+                  
 
     rq = get_data(dataset_list, fields)
     print('All RQs loaded!')
