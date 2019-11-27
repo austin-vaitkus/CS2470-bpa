@@ -131,6 +131,28 @@ def train(model, inputs, labels):
     return None
 
 
+def test(model, inputs, labels):
+    
+    batch_counter = 0
+    accuracy = 0
+    loss = 0
+    
+    for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size), 
+                          range(model.batch_size, inputs.shape[0], model.batch_size)):    
+        batch_counter += 1
+        
+        batch_inputs = inputs[start:end]
+        batch_labels = labels[start:end]
+        
+        probabilities = model(batch_inputs)
+        loss += model.loss_function(probabilities, batch_labels)
+        accuracy += model.accuracy_function(probabilities, batch_labels)
+        
+    loss /= batch_counter
+    accuracy /= batch_counter
+    
+    return accuracy, loss
+
 def main():
 
 #%%    
@@ -239,11 +261,17 @@ def main():
     epochs = 1
     for epoch in range(epochs):
         train(model, pulse_rqs, labels)
-        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n'.format(epoch, (time.time()-t)/60))#, accuracy))
+        print('Epoch {} Complete. Total Time = {} minutes\n'.format(epoch+1, round((time.time()-t)/60,1)))#, accuracy))
 #        print('Epoch {0:1d} Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format(epoch, (time.time()-t)/60))#, accuracy))
     
-    print('Testing Complete. Total Time = {0:1.1f} minutes\n'.format((time.time()-t)/60))#, accuracy))
-#    print('Testing Complete. Total Time = {0:1.1f} minutes\n Accuracy = {1:.0%}'.format((time.time()-t)/60))#, accuracy))
+    
+    test_rqs = pulse_rqs.copy()
+    test_labels = labels.copy()
+    t = time.time()
+    
+    test_acc, test_loss = test(model, test_rqs, test_labels)
+    print('Testing Complete. Testing Time = {0:1.1f} minutes\nTesting Accuracy = {1:.0%}'.format(round((time.time()-t)/60,1) , test_acc))
+  
 
 
 if __name__ == '__main__':
