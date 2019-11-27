@@ -2,4 +2,7 @@ venv/*
 .idea/*
 /data/*
 .spyproject/*
+<<<<<<< HEAD
 *.pyc
+=======
+>>>>>>> 2c58379aa376417a581b8e1ccc1a7524fd402486
