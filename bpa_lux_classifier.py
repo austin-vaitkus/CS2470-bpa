@@ -13,7 +13,7 @@ from preprocess import get_data
 ###################################
 
 class Model(tf.keras.Model):
-    def __init__(self):
+    def __init__(self, num_classes):
         """
         Model architecture for pulse classification. Contains forward pass, accuracy, and loss.
 		"""
@@ -21,7 +21,7 @@ class Model(tf.keras.Model):
         
         # Model Hyperparameters
         self.batch_size = 50
-        self.num_classes = 4
+        self.num_classes = num_classes
         self.learning_rate = 2e-3
         self.drop_rate = 0.1
 
@@ -118,11 +118,11 @@ def train(model, inputs, labels):
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         
-#        # Print Current Progress
-#        if start/inputs.shape[0] >= print_counter:
-#            print_counter += 0.2                                                # Update print counter
-#            accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
-#            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
+        # Print Current Progress
+        if start/inputs.shape[0] >= print_counter:
+            print_counter += 0.2                                                # Update print counter
+            accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
+            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
 
     return None
 
@@ -233,7 +233,9 @@ def main():
 
 
     # Pull data using preprocessing
-    train_rqs, train_labels, pulse_event_index, test_rqs, test_labels, test_event_index = get_data(dataset_list, fields)
+    use_these_classifiers = (1,2,3,4)
+    num_classes = len(use_these_classifiers)
+    train_rqs, train_labels, pulse_event_index, test_rqs, test_labels, test_event_index = get_data(dataset_list, fields, use_these_classifiers)
     train_labels = train_labels - 1
     test_labels = test_labels - 1
 
@@ -249,7 +251,7 @@ def main():
     
 #%%
     # Define model
-    model = Model()
+    model = Model(num_classes)
 
 
     t = time.time()

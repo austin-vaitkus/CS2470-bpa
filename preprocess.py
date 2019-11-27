@@ -6,7 +6,7 @@ from aLib import dp
 
 from scipy import io
 
-def get_data(dataset_list, fields):
+def get_data(dataset_list, fields,use_these_classifiers):
     """
 	Given a file path and a list of RQs returns the data for the specified dataset and RQs.
 	:param file_path: file path for inputs and labels. Trial set is '/data/lux10_20160627T0824_cp24454'
@@ -48,9 +48,14 @@ def get_data(dataset_list, fields):
 
     # Remove pulses from the RQ block that are empty pulses (pulse_classification==0)
     # Locate where pulses are empty
+    # empty_pulse_index = []
+    # for i in range(num_pulses_with_blanks):
+    #     if labels[i]==0 or labels[i]==5:
+    #         empty_pulse_index.append(i)
+    
     empty_pulse_index = []
     for i in range(num_pulses_with_blanks):
-        if labels[i]==0 or labels[i]==5:
+        if not set(list(use_these_classifiers)).intersection(list(labels[i],)):
             empty_pulse_index.append(i)
 
     # Initialize array of length 10xnum_events (i.e. num_pulses_with_blanks) with an index repeating 10x.
