@@ -83,7 +83,7 @@ class Model(tf.keras.Model):
 
 ################################
 
-def train(model, data):
+def train(model, inputs, labels):
     """
     This function should train your model for one episode.
     Each call to this function should generate a complete trajectory for one episode (lists of states, action_probs,
@@ -94,6 +94,23 @@ def train(model, data):
     :param data: LUX RQ data, preprocessed
     :return: The total reward for the episode
     """
+    t = time.time()
+    print_counter = 0
+    
+    for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size), range(model.batch_size, inputs.shape[0], model.batch_size)):
+        batch_inputs = inputs[start:end]
+        batch_labels = labels[start:end]
+        
+        with tf.GradientTape() as tape:
+            probabilities = model(batch_inputs, batch_labels)
+            loss = model.loss_function(probabilities, batch_labels)
+
+        gradients = tape.gradient(loss, model.trainable_variables)
+        model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+        
+        if start/inputs.shape[0] >= print_counter:
+            accuracy = model.accuracy_function(probabilities, batch_labels)
+            print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy))            
 
     return None
 
