@@ -9,7 +9,6 @@ import aLib
 from aLib import dp
 from preprocess import get_data
 
-
 ###################################
 
 class Model(tf.keras.Model):
@@ -20,7 +19,7 @@ class Model(tf.keras.Model):
         super(Model, self).__init__()
         
         # Model Hyperparameters
-        self.batch_size = 50
+        self.batch_size = 100
         self.num_classes = num_classes
         self.learning_rate = 2e-3
         self.drop_rate = 0.1
@@ -34,8 +33,6 @@ class Model(tf.keras.Model):
         # Initialize Optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate = self.learning_rate)
         
-        
-
     def call(self, inputs):
         """
         Performs the forward pass on a batch of RQs to generate pulse classification probabilities. 
@@ -50,12 +47,10 @@ class Model(tf.keras.Model):
         dense3_output = self.dense3(dense2_output)
         dense4_output = self.dense4(dense3_output)
         
-        
         # Probabilities of each classification
         probabilities = tf.nn.softmax(dense4_output)
 
         return(probabilities)
-
 
     def loss_function(self, probabilities, labels):
         """
@@ -67,7 +62,6 @@ class Model(tf.keras.Model):
         :return: model loss as a tensor
         """
         return(tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(labels, probabilities)))
-
 
     def accuracy_function(self, probabilities, labels):
         """
@@ -82,10 +76,9 @@ class Model(tf.keras.Model):
         return(tf.reduce_mean(tf.cast(correct_predictions, dtype = tf.float32)))
 
 
-
 def train(model, inputs, labels):
     """
-    This function should train your model for one episode.
+    This function should train your model for one epoch
     Each call to this function should generate a complete trajectory for one episode (lists of states, action_probs,
     and rewards seen/taken in the episode), and then train on that data to minimize your model loss.
     Make sure to return the total reward for the episode.
@@ -94,9 +87,12 @@ def train(model, inputs, labels):
     :param data: LUX RQ data, preprocessed
     :return: The total reward for the episode
     """
+    # TODO: Shuffle training data between epochs
     t = time.time()
-    print_counter = 0
-    
+    print_every_x_percent = 20
+
+    # Initialize variables
+    print_counter = print_every_x_percent
     accuracy = 0
     batch_counter = 0
 
@@ -119,8 +115,8 @@ def train(model, inputs, labels):
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         
         # Print Current Progress
-        if start/inputs.shape[0] >= print_counter:
-            print_counter += 0.2                                                # Update print counter
+        if 100*start/inputs.shape[0] >= print_counter:
+            print_counter += print_every_x_percent                                                # Update print counter
             accuracy_mean = accuracy/batch_counter                              # Get current model accuracy
             print("{0:.0%} complete, Time = {1:2.1f} min, Accuracy = {2:.0%}".format(end/inputs.shape[0], (time.time()-t)/60, accuracy_mean))
 
@@ -235,7 +231,7 @@ def main():
     # Pull data using preprocessing
     use_these_classifiers = (1,2,3,4)
     num_classes = len(use_these_classifiers)
-    train_rqs, train_labels, pulse_event_index, test_rqs, test_labels, test_event_index = get_data(dataset_list, fields, use_these_classifiers)
+    train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index = get_data(dataset_list, fields, use_these_classifiers)
     train_labels = train_labels - 1
     test_labels = test_labels - 1
 
