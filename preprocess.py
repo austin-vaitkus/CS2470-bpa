@@ -6,14 +6,12 @@ from aLib import dp
 
 from scipy import io
 
-def get_data(dataset_list, fields,use_these_classifiers):
+def get_data(dataset_list, fields):
     """
 	Given a file path and a list of RQs returns the data for the specified dataset and RQs.
 	:param file_path: file path for inputs and labels. Trial set is '/data/lux10_20160627T0824_cp24454'
 	:param fields: list of strings containing the desired rq names to be loaded
-	:param use_these_classifiers: list of classifier labels (0-5) that should be included in the training and test sets.
-	:return: NumPy array of training rqs of size [num_pulses x num_pulse_RQs], classifier labels of size [num_pulses x 1] and pulse event index of size [num_pulses x 1] for the
-	training and test sets.
+	:return: NumPy array of training rqs of size [num_pulses x num_pulse_RQs], classifier labels of size [num_pulses x 1] and pulse event index of size [num_pulses x 1]
 	"""
 
     rqBasePath_list = []
@@ -26,9 +24,7 @@ def get_data(dataset_list, fields,use_these_classifiers):
     # Break apart events into pulses, then compile these into a list while assigning them an event index for later association when we look at event structures.
 
     test_set_fraction = 0.1
-    rq_norm_mode = 0 #  Set to 0 for no normalization of RQs, 1 for normalization by the 80th percentile largest value, and 2 for normalization via the abs(maximum value)
     num_pulses_per_event = 10
-
     num_events = rq['pulse_classification'].shape[1]
     num_pulses_with_blanks = num_events * num_pulses_per_event
 
@@ -48,21 +44,14 @@ def get_data(dataset_list, fields,use_these_classifiers):
     pulse_rqs = np.zeros(shape=[num_pulses_with_blanks, num_pulse_rqs])
     for i in range(num_pulse_rqs):
         pulse_rq_name = pulse_rq_list[i]
-        if rq_norm_mode==0:
-            rq_norm_factor = 1
-        elif rq_norm_mode==1:
-            rq_norm_factor = np.percentile(abs(rq[pulse_rq_name]), 80)
-        elif rq_norm_mode==2:
-            rq_norm_factor = np.max(abs(rq[pulse_rq_name]))
-        pulse_rqs[:, i] = np.reshape(a=rq[pulse_rq_name].T, newshape=[1, -1])/rq_norm_factor
-        # TODO: Add functionality to truncate rq outlier values?
+        pulse_rqs[:,i] = np.reshape(a=rq[pulse_rq_name].T, newshape=[1,-1])/np.max(abs(rq[pulse_rq_name]))
 
-    # Remove pulses from the RQ block that are not in the use_these_classifiers input
+    # Remove pulses from the RQ block that are empty pulses (pulse_classification==0)
+    # Locate where pulses are empty
     empty_pulse_index = []
     for i in range(num_pulses_with_blanks):
         if labels[i]==0 or labels[i]==5:# or labels[i] == 4 or labels[i] == 3:
-        # if not set(list(use_these_classifiers)).intersection(list(labels[i],)):
-        #     empty_pulse_index.append(i)
+            empty_pulse_index.append(i)
 
     # Initialize array of length 10xnum_events (i.e. num_pulses_with_blanks) with an index repeating 10x.
     # This will be cut down in the same way as the empty pulses to give a unique index per pulse to
@@ -76,6 +65,7 @@ def get_data(dataset_list, fields,use_these_classifiers):
 
     num_real_pulses = len(labels)
 
+
     # Shuffle the three arrays on the same indexing
     shuffle_index = np.arange(num_real_pulses)
     np.random.shuffle(shuffle_index)
@@ -83,16 +73,15 @@ def get_data(dataset_list, fields,use_these_classifiers):
     labels = labels[shuffle_index]
     pulse_event_index = pulse_event_index[shuffle_index]
 
-    # Separate out training and test data. TODO: Makes sure to split cleanly on an event so we don't have events split between the two sets. Currently doesn't keep events together
+    # Separate out training and test data. TODO: Makes sure to split cleanly on an event so we don't have events split between the two sets
     split_index = int(test_set_fraction*num_real_pulses)
-    train_rqs = pulse_rqs[split_index:]
-    train_labels = labels[split_index:]
-    train_event_index = pulse_event_index[split_index:]
-
     test_rqs = pulse_rqs[:split_index]
     test_labels = labels[:split_index]
     test_pulse_event_index = pulse_event_index[:split_index]
 
+    train_rqs = pulse_rqs[split_index:]
+    train_labels = labels[split_index:]
+    train_pulse_event_index = pulse_event_index[split_index:]
 
     print('Pulse RQ data block pre-processed')
-    return train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_pulse_event_index
+    return train_rqs, train_labels, train_pulse_event_index, test_rqs, test_labels, test_pulse_event_index
