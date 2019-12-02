@@ -20,7 +20,7 @@ class Model(tf.keras.Model):
         super(Model, self).__init__()
 
         # Model Hyperparameters
-        self.batch_size = 100
+        self.batch_size = 64
         self.num_classes = num_classes
         self.learning_rate = 2e-3
         self.drop_rate = 0.1
@@ -125,6 +125,12 @@ def train(model, inputs, labels):
 
 
 def test(model, inputs, labels):
+    
+
+    # Initialize variables
+    print_every_x_percent = 20
+    print_counter = print_every_x_percent
+
     batch_counter = 0
     accuracy = 0
     loss = 0
@@ -139,6 +145,20 @@ def test(model, inputs, labels):
         probabilities = model(batch_inputs)
         loss += model.loss_function(probabilities, batch_labels)
         accuracy += model.accuracy_function(probabilities, batch_labels)
+
+        if 100 * start / inputs.shape[0] >= print_counter:
+            print_counter += print_every_x_percent  # Update print counter
+            print(print_counter,'%')
+#            print('probabilities=',probabilities)
+#            print('labels=',batch_labels.T)
+#            print(np.mean(np.equal(np.argmax(probabilities,axis=1),batch_labels.T)))
+
+            print('0 : {0:.0%}'.format((np.argmax(np.array(probabilities)[np.where(np.transpose(batch_labels) == 0)[1]],axis=1)==0).sum()/np.array(probabilities)[np.where(np.transpose(batch_labels) == 0)[1]].shape[0]))
+            print('1 : {0:.0%}'.format((np.argmax(np.array(probabilities)[np.where(np.transpose(batch_labels) == 1)[1]],axis=1)==1).sum()/np.array(probabilities)[np.where(np.transpose(batch_labels) == 1)[1]].shape[0]))
+            print('2 : {0:.0%}'.format((np.argmax(np.array(probabilities)[np.where(np.transpose(batch_labels) == 2)[1]],axis=1)==2).sum()/np.array(probabilities)[np.where(np.transpose(batch_labels) == 2)[1]].shape[0]))
+            print('3 : {0:.0%}'.format((np.argmax(np.array(probabilities)[np.where(np.transpose(batch_labels) == 3)[1]]
+                ,axis=1)==3).sum()/np.array(probabilities)[np.where(np.transpose(batch_labels) == 3)[1]].shape[0]))
+
 
     loss /= batch_counter
     accuracy /= batch_counter
