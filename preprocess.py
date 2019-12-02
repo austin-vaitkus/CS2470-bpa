@@ -62,7 +62,7 @@ def get_data(dataset_list, fields,use_these_classifiers):
     for i in range(num_pulses_with_blanks):
         if labels[i]==0 or labels[i]==5:# or labels[i] == 4 or labels[i] == 3:
         # if not set(list(use_these_classifiers)).intersection(list(labels[i],)):
-        #     empty_pulse_index.append(i)
+            empty_pulse_index.append(i)
 
     # Initialize array of length 10xnum_events (i.e. num_pulses_with_blanks) with an index repeating 10x.
     # This will be cut down in the same way as the empty pulses to give a unique index per pulse to
