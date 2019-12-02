@@ -50,7 +50,7 @@ def get_data(dataset_list, fields):
     # Locate where pulses are empty
     empty_pulse_index = []
     for i in range(num_pulses_with_blanks):
-        if labels[i]==0 or labels[i]==5:# or labels[i] == 4 or labels[i] == 3:
+        if labels[i]==0 or labels[i]==5:
             empty_pulse_index.append(i)
 
     # Initialize array of length 10xnum_events (i.e. num_pulses_with_blanks) with an index repeating 10x.
