@@ -20,7 +20,7 @@ class Model(tf.keras.Model):
         super(Model, self).__init__()
         
         # Model Hyperparameters
-        self.batch_size = 64
+        self.batch_size = 50
         self.num_classes = 4
         self.learning_rate = 2e-3
         self.drop_rate = 0.1
@@ -78,7 +78,7 @@ class Model(tf.keras.Model):
         
 		:return: model accuracy as scalar tensor
 		"""
-        correct_predictions = tf.equal(tf.argmax(probabilities, 1), np.transpose(labels))
+        correct_predictions = tf.equal(tf.argmax(probabilities, 1), labels)
         return(tf.reduce_mean(tf.cast(correct_predictions, dtype = tf.float32)))
 
 
@@ -128,7 +128,6 @@ def train(model, inputs, labels):
 
 def test(model, inputs, labels):
     
-    print_counter = 0
     batch_counter = 0
     accuracy = 0
     loss = 0
@@ -143,7 +142,7 @@ def test(model, inputs, labels):
         probabilities = model(batch_inputs)
         loss += model.loss_function(probabilities, batch_labels)
         accuracy += model.accuracy_function(probabilities, batch_labels)
-                
+        
     loss /= batch_counter
     accuracy /= batch_counter
     
@@ -238,8 +237,16 @@ def main():
     train_labels = train_labels - 1
     test_labels = test_labels - 1
 
-     
-     
+#%%
+#    print('pulse rq shape', pulse_rqs.shape)
+#    print('labels shape', labels.shape)
+#    print('pulse event index shape', pulse_event_index.shape)
+    
+#    print('labels',labels[:,0])   
+#    print(pulse_event_index[0:11])
+    # print((train_rqs[80:81]))
+    # print((test_rqs == - 999999).sum())
+    
 #%%
     # Define model
     model = Model()
