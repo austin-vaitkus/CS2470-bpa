@@ -23,9 +23,14 @@ class Model(tf.keras.Model):
         self.batch_size = 64
         self.num_classes = num_classes
         self.learning_rate = 2e-3
-        self.drop_rate = 0.1
+#        self.drop_rate = 0.1
+        self.num_filters = 15
+        self.kernel_size = 1
+        self.strides = 1
 
         # Model Layers
+#        self.conv1 = tf.keras.layers.Conv1D(self.num_filters, self.kernel_size, self.strides, padding='SAME', activation='relu')
+        
         self.dense1 = tf.keras.layers.Dense(self.num_classes * 4, activation='relu', dtype=tf.float32, name='dense1')
         self.dense2 = tf.keras.layers.Dense(self.num_classes * 3, activation='relu', dtype=tf.float32, name='dense2')
         self.dense3 = tf.keras.layers.Dense(self.num_classes * 2, activation='relu', dtype=tf.float32, name='dense3')
@@ -43,6 +48,14 @@ class Model(tf.keras.Model):
         """
 
         # Forward pass on inputs
+
+
+#        # Conv1d attempt
+#        test_inputs = tf.reshape(inputs,(inputs.shape[0],inputs.shape[1],1))
+#        conv1_output = self.conv1(test_inputs)
+#        conv1_output_flat = tf.reshape(conv1_output,[self.batch_size,-1])
+#        dense4_output = self.dense4(conv1_output_flat)
+        
         dense1_output = self.dense1(inputs)
         dense2_output = self.dense2(dense1_output)
         dense3_output = self.dense3(dense2_output)
@@ -152,12 +165,8 @@ def test(model, inputs, labels):
 #            print('probabilities=',probabilities)
 #            print('labels=',batch_labels.T)
 #            print(np.mean(np.equal(np.argmax(probabilities,axis=1),batch_labels.T)))
-
-            print('0 : {0:.0%}'.format((np.argmax(np.array(probabilities)[np.where(np.transpose(batch_labels) == 0)[1]],axis=1)==0).sum()/np.array(probabilities)[np.where(np.transpose(batch_labels) == 0)[1]].shape[0]))
-            print('1 : {0:.0%}'.format((np.argmax(np.array(probabilities)[np.where(np.transpose(batch_labels) == 1)[1]],axis=1)==1).sum()/np.array(probabilities)[np.where(np.transpose(batch_labels) == 1)[1]].shape[0]))
-            print('2 : {0:.0%}'.format((np.argmax(np.array(probabilities)[np.where(np.transpose(batch_labels) == 2)[1]],axis=1)==2).sum()/np.array(probabilities)[np.where(np.transpose(batch_labels) == 2)[1]].shape[0]))
-            print('3 : {0:.0%}'.format((np.argmax(np.array(probabilities)[np.where(np.transpose(batch_labels) == 3)[1]]
-                ,axis=1)==3).sum()/np.array(probabilities)[np.where(np.transpose(batch_labels) == 3)[1]].shape[0]))
+            for i in range(model.num_classes):
+                print('{0:1d} : {1:.0%}'.format(i,(np.argmax(np.array(probabilities)[np.where(np.transpose(batch_labels) == i)[1]],axis=1)==0).sum()/np.array(probabilities)[np.where(np.transpose(batch_labels) == i)[1]].shape[0]))
 
 
     loss /= batch_counter
@@ -272,7 +281,7 @@ def main():
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
         test_acc = test(model, test_rqs, test_labels)
-        print("Epoch {0:1d} Complete.\nTotal Time = {1:2.1f} minutes, Testing Accuracy = {2:.0%}".format(epoch + 1, (time.time() - t) / 60, test_acc))
+        print("Epoch {0:1d} Complete.\nTotal Time = {1:2.1f} minutes, Testing Accuracy = {2:.0%}\n\n".format(epoch + 1, (time.time() - t) / 60, test_acc))
 
 
 if __name__ == '__main__':
