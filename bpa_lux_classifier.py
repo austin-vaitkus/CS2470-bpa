@@ -142,11 +142,13 @@ def test(model, inputs, labels):
 
     # Initialize variables
     print_every_x_percent = 20
-    print_counter = print_every_x_percent
+    print_test_diagnostics = True
 
+    print_counter = print_every_x_percent
     batch_counter = 0
     accuracy = 0
     loss = 0
+    predicted_labels = np.zeros(labels.shape)
 
     for start, end in zip(range(0, inputs.shape[0] - model.batch_size, model.batch_size),
                           range(model.batch_size, inputs.shape[0], model.batch_size)):
@@ -159,6 +161,9 @@ def test(model, inputs, labels):
         loss += model.loss_function(probabilities, batch_labels)
         accuracy += model.accuracy_function(probabilities, batch_labels)
 
+        # Store the predicted labels for the batch
+        predicted_labels[start:end] = tf.reshape(tf.argmax(probabilities, axis=1), [-1, 1])
+
         if 100 * start / inputs.shape[0] >= print_counter:
             print_counter += print_every_x_percent  # Update print counter
             print('{0:.0%}'.format(print_counter/100))
@@ -169,6 +174,22 @@ def test(model, inputs, labels):
 
     loss /= batch_counter
     accuracy /= batch_counter
+
+    # Print diagnostic data on test batch:
+    if print_test_diagnostics:
+        # Truncate labels at end of last batch
+        diag_elements = end
+        diag_labels = labels[:diag_elements]
+        diag_predictions = predicted_labels[:diag_elements]
+
+        # Print actual distribution of classes:
+        print('Per-class test set accuracies:')
+        for label in range(model.num_classes):
+            actual_label_fraction = np.sum(diag_labels == label)/diag_elements        # What fraction of the data is this class
+            pred_label_fraction = np.sum(diag_predictions == label)/diag_elements     # What fraction of the data does the net think is this class.
+            label_accuracy = np.sum(np.logical_and(diag_labels == label, diag_predictions == label)) / np.sum(diag_labels == label) # Fraction of this class that were correctly identified
+            print('Class: %i \t Actual fraction:%.2f \t Predicted fraction:%.2f \t Class accuracy:%.2f' % (label, actual_label_fraction, pred_label_fraction, label_accuracy))
+        print('')
 
     return accuracy  # , loss
 
