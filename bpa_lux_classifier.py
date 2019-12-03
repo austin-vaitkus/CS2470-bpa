@@ -161,12 +161,9 @@ def test(model, inputs, labels):
 
         if 100 * start / inputs.shape[0] >= print_counter:
             print_counter += print_every_x_percent  # Update print counter
-            print(print_counter,'%')
-#            print('probabilities=',probabilities)
-#            print('labels=',batch_labels.T)
-#            print(np.mean(np.equal(np.argmax(probabilities,axis=1),batch_labels.T)))
+            print('{0:.0%}'.format(print_counter))
             for i in range(model.num_classes):
-                print('{0:1d} : {1:.0%}'.format(i,(np.argmax(np.array(probabilities)[np.where(np.transpose(batch_labels) == i)[1]],axis=1)==0).sum()/np.array(probabilities)[np.where(np.transpose(batch_labels) == i)[1]].shape[0]))
+                print('{0:1d} : {1:.0%}'.format(i,(np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1)==i).sum()/np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)].shape[0]))
 
 
     loss /= batch_counter
