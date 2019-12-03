@@ -161,10 +161,11 @@ def test(model, inputs, labels):
 
         if 100 * start / inputs.shape[0] >= print_counter:
             print_counter += print_every_x_percent  # Update print counter
-            print('{0:.0%}'.format(print_counter))
+            print('{0:.0%}'.format(print_counter/100))
             for i in range(model.num_classes):
-                print('{0:1d} : {1:.0%}'.format(i,(np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1)==i).sum()/np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)].shape[0]))
-
+                number_of_pulses_in_label = np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)].shape[0]
+                number_correctly_identified = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1)==i).sum()
+                print('Label = {0:1d}. {1:.0%} Correctly Predicted = {2:1d}/{3:1d}'.format(i,number_correctly_identified/number_of_pulses_in_label,number_correctly_identified,number_of_pulses_in_label))
 
     loss /= batch_counter
     accuracy /= batch_counter
