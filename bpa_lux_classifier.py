@@ -22,7 +22,7 @@ class Model(tf.keras.Model):
         # Model Hyperparameters
         self.batch_size = 200
         self.num_classes = num_classes
-        self.learning_rate = 4e-4
+        self.learning_rate = 2e-4
 #        self.drop_rate = 0.1
         self.num_filters = 15
         self.kernel_size = 1
@@ -102,7 +102,7 @@ def train(model, inputs, labels):
     :return: The total reward for the episode
     """
     # Options:
-    shuffle_per_epoch = False
+    shuffle_per_epoch = True
     print_every_x_percent = 20
 
     # If enabled, shuffle the training inputs and labels at start of epoch
@@ -309,7 +309,7 @@ def main():
 
     t = time.time()
     # Train model
-    epochs = 20
+    epochs = 30
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
         test_acc = test(model, test_rqs, test_labels)
