@@ -171,6 +171,11 @@ def test(model, inputs, labels):
                 number_of_pulses_in_label = np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)].shape[0]
                 number_correctly_identified = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1)==i).sum()
                 print('Label = {0:1d}. {1:.0%} Correctly Predicted = {2:1d}/{3:1d}'.format(i,number_correctly_identified/number_of_pulses_in_label,number_correctly_identified,number_of_pulses_in_label))
+                
+                if number_of_pulses_in_label != number_correctly_identified:
+                    incorrect_predictions = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1))
+                    print('\t Label =',i,'\n \t Labels:',incorrect_predictions[incorrect_predictions!=i])
+
 
     loss /= batch_counter
     accuracy /= batch_counter
