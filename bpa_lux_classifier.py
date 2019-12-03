@@ -20,9 +20,9 @@ class Model(tf.keras.Model):
         super(Model, self).__init__()
 
         # Model Hyperparameters
-        self.batch_size = 64
+        self.batch_size = 200
         self.num_classes = num_classes
-        self.learning_rate = 2e-3
+        self.learning_rate = 4e-4
 #        self.drop_rate = 0.1
         self.num_filters = 15
         self.kernel_size = 1
@@ -101,11 +101,19 @@ def train(model, inputs, labels):
     :param data: LUX RQ data, preprocessed
     :return: The total reward for the episode
     """
-    # TODO: Shuffle training data between epochs
-    t = time.time()
+    # Options:
+    shuffle_per_epoch = False
     print_every_x_percent = 20
 
+    # If enabled, shuffle the training inputs and labels at start of epoch
+    if shuffle_per_epoch:
+        shuffle_index = np.arange(labels.shape[0])
+        np.random.shuffle(shuffle_index)
+        shuf_inputs = inputs[shuffle_index,:]
+        shuf_labels = labels[shuffle_index]
+
     # Initialize variables
+    t = time.time()
     print_counter = print_every_x_percent
     accuracy = 0
     batch_counter = 0
@@ -188,7 +196,7 @@ def test(model, inputs, labels):
         diag_predictions = predicted_labels[:diag_elements]
 
         # Print actual distribution of classes:
-        print('Per-class test set accuracies:')
+        print('Per-class accuracies for entire test set:')
         for label in range(model.num_classes):
             actual_label_fraction = np.sum(diag_labels == label)/diag_elements        # What fraction of the data is this class
             pred_label_fraction = np.sum(diag_predictions == label)/diag_elements     # What fraction of the data does the net think is this class.
@@ -301,7 +309,7 @@ def main():
 
     t = time.time()
     # Train model
-    epochs = 10
+    epochs = 20
     for epoch in range(epochs):
         train(model, train_rqs, train_labels)
         test_acc = test(model, test_rqs, test_labels)
