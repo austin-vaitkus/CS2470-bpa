@@ -209,18 +209,23 @@ def test(model, inputs, labels):
 
 def main():
     # %%
-    # dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
-    # dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
-    dataset_list = ['lux10_20130425T1047']  # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
 
-    # Generic pulse finding RQs
-    # fields = ["pulse_area_phe", "luxstamp_samples", "pulse_classification",
-    #           "s1s2_pairing", "z_drift_samples", "cor_x_cm", "cor_y_cm",
-    #           "top_bottom_ratio", "rms_width_samples", "xyz_corrected_pulse_area_all_phe",
-    #           "event_timestamp_samples", 'file_number']
+    # Parameters for the run
+    dataset_switch = 2 # Use 2 for standard Kr dataset.
+    RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
+    use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
+    epochs = 30  # num of times during training to loop over all data for an independent training trial.
+    num_trials = 10  # Number of independent training/testing runs (trials) to perform
+
+    # Select the dataset to use
+    if dataset_switch == 0:
+        dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
+    elif dataset_switch == 1:
+        dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
+    elif dataset_switch == 2:
+        dataset_list = ['lux10_20130425T1047']  # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
 
     # Decide which RQs to use. 1 for original LPC (1-to-1 comparison) vs 2 for larger list of RQs.
-    RQ_list_switch = 1
     if RQ_list_switch == 1:
         # Below: RQs used by the standard LUX Pulse Classifier
         fields = ['pulse_area_phe',  # OG LPC
@@ -261,12 +266,8 @@ def main():
                   'file_number',  # OG LPC
                   # 's1s2pairing', # may help later for finding Kr events?
                   'pulse_classification',
-                  #  ADD MORE RQs HERE  #
                   ]
 
-    #    rq = get_data(dataset_list, fields)
-    #    print('All RQs loaded!')
-    #
     #    # Create some variables for ease of broad event classification and population checking.
     #    pulse_classification = rq[0].pulse_classification
     #    num_pulses = np.sum(pulse_classification > 0, axis=0)
@@ -274,46 +275,32 @@ def main():
     #    num_S2s = np.sum(pulse_classification == 2,axis=0)
     #    num_se = np.sum(pulse_classification == 3, axis=0)
     #    num_sphe = np.sum(pulse_classification == 4, axis=0)
-    print('[end file]')
     #    rqs, labels, pulse_event_index  = get_data(dataset_list, fields)
-    print('All RQs loaded!')
 
-    # Create some variables for ease of broad event classification and population checking.
-    #    pulse_classification = labels
-    #    num_pulses = np.sum(pulse_classification > 0, axis=0)
-    #    num_S1s = np.sum(pulse_classification == 1,axis=0)
-    #    num_S2s = np.sum(pulse_classification == 2,axis=0)
-    #    num_se = np.sum(pulse_classification == 3, axis=0)
-    #    num_sphe = np.sum(pulse_classification == 4, axis=0)
+    trial_test_acc = []
+    for trial_index in range(num_trials):
 
-    # Pull data using preprocessing
-    use_these_classifiers = (1, 2, 3, 4)
-    num_classes = len(use_these_classifiers)
-    train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index = get_data(dataset_list, fields, use_these_classifiers)
-    train_labels = train_labels - 1
-    test_labels = test_labels - 1
+        # Load and preprocess the data
+        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index = get_data(dataset_list, fields, use_these_classifiers)
+        train_labels = train_labels - 1
+        test_labels = test_labels - 1
 
-    # %%
-    #    print('pulse rq shape', pulse_rqs.shape)
-    #    print('labels shape', labels.shape)
-    #    print('pulse event index shape', pulse_event_index.shape)
+        # Define model
+        num_classes = len(use_these_classifiers)
+        model = Model(num_classes)
 
-    #    print('labels',labels[:,0])
-    #    print(pulse_event_index[0:11])
-    # print((train_rqs[80:81]))
-    # print((test_rqs == - 999999).sum())
+        # Train model
+        t = time.time()
+        for epoch in range(epochs):
+            train(model, train_rqs, train_labels)
+            test_acc = test(model, test_rqs, test_labels)
+            print("Epoch {0:1d} Complete.\nTotal Time = {1:2.1f} minutes, Testing Accuracy = {2:.0%}\n\n".format(epoch + 1, (time.time() - t) / 60, test_acc))
+        trial_test_acc.append(test_acc)
 
-    # %%
-    # Define model
-    model = Model(num_classes)
-
-    t = time.time()
-    # Train model
-    epochs = 30
-    for epoch in range(epochs):
-        train(model, train_rqs, train_labels)
-        test_acc = test(model, test_rqs, test_labels)
-        print("Epoch {0:1d} Complete.\nTotal Time = {1:2.1f} minutes, Testing Accuracy = {2:.0%}\n\n".format(epoch + 1, (time.time() - t) / 60, test_acc))
+    # Summarize the num_trials independent trials with a list of final testing accuracies
+    print('\n%i independent training trials complete. Final testing accuracies:' % num_trials)
+    print(*np.array(trial_test_acc), sep='  ')
+    print('Mean testing accuracy over all trials: %0.2f +/- %0.2f' % (np.average(trial_test_acc), np.std(trial_test_acc) ) )
 
 
 if __name__ == '__main__':
