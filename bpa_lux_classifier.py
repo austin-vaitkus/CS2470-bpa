@@ -109,8 +109,8 @@ def train(model, inputs, labels):
     if shuffle_per_epoch:
         shuffle_index = np.arange(labels.shape[0])
         np.random.shuffle(shuffle_index)
-        shuf_inputs = inputs[shuffle_index,:]
-        shuf_labels = labels[shuffle_index]
+        shuf_inputs = inputs[shuffle_index,:] #Not used - should say inputs = inputs, instead?
+        shuf_labels = labels[shuffle_index] # same
 
     # Initialize variables
     t = time.time()
@@ -214,8 +214,9 @@ def main():
     dataset_switch = 2 # Use 2 for standard Kr dataset.
     RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
-    epochs = 30  # num of times during training to loop over all data for an independent training trial.
-    num_trials = 10  # Number of independent training/testing runs (trials) to perform
+    epochs = 15  # num of times during training to loop over all data for an independent training trial.
+    num_trials = 5  # Number of independent training/testing runs (trials) to perform
+    use_log_rqs = 1 # 0 for input = RQs, 1 for input = log(RQs), 2 for input = np.append(RQs, log(RQs))
 
     # Select the dataset to use
     if dataset_switch == 0:
@@ -281,10 +282,10 @@ def main():
     for trial_index in range(num_trials):
 
         # Load and preprocess the data
-        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index = get_data(dataset_list, fields, use_these_classifiers)
+        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, _ = get_data(dataset_list, fields, use_these_classifiers)
         train_labels = train_labels - 1
         test_labels = test_labels - 1
-
+        
         # Define model
         num_classes = len(use_these_classifiers)
         model = Model(num_classes)

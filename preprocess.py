@@ -27,6 +27,7 @@ def get_data(dataset_list, fields,use_these_classifiers):
 
     test_set_fraction = 0.1
     rq_norm_mode = 0 #  Set to 0 for no normalization of RQs, 1 for normalization by the 80th percentile largest value, and 2 for normalization via the abs(maximum value)
+    rq_tanh_norm = 2 #  Set to 0 for no RQ scaling, 1 for RQ = tanh(RQ), 2 for both!
     num_pulses_per_event = 10
 
     num_events = rq['pulse_classification'].shape[1]
@@ -54,7 +55,11 @@ def get_data(dataset_list, fields,use_these_classifiers):
             rq_norm_factor = np.percentile(abs(rq[pulse_rq_name]), 80)
         elif rq_norm_mode==2:
             rq_norm_factor = np.max(abs(rq[pulse_rq_name]))
-        pulse_rqs[:, i] = np.reshape(a=rq[pulse_rq_name].T, newshape=[1, -1])/rq_norm_factor
+        pulse_rqs[:, i] = np.reshape(a=rq[pulse_rq_name].T, newshape=[1, -1])/rq_norm_factor   
+    if rq_tanh_norm == 1:
+        pulse_rqs = np.tanh(pulse_rqs)
+    elif rq_tanh_norm == 2:
+        pulse_rqs = np.append(pulse_rqs,np.tanh(pulse_rqs), axis = 1)
         # TODO: Add functionality to truncate rq outlier values?
 
     # Remove pulses from the RQ block that are not in the use_these_classifiers input
@@ -94,4 +99,4 @@ def get_data(dataset_list, fields,use_these_classifiers):
 
 
     print('Pulse RQ data block pre-processed')
-    return train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_pulse_event_index
+    return train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_pulse_event_index, pulse_rq_list
