@@ -6,7 +6,7 @@ from aLib import dp
 
 from scipy import io
 
-def get_data(dataset_list, fields,use_these_classifiers):
+def get_data(dataset_list, fields,use_these_classifiers, phase = 0.0075):
     """
 	Given a file path and a list of RQs returns the data for the specified dataset and RQs.
 	:param file_path: file path for inputs and labels. Trial set is '/data/lux10_20160627T0824_cp24454'
@@ -27,7 +27,8 @@ def get_data(dataset_list, fields,use_these_classifiers):
 
     test_set_fraction = 0.1
     rq_norm_mode = 0 #  Set to 0 for no normalization of RQs, 1 for normalization by the 80th percentile largest value, and 2 for normalization via the abs(maximum value)
-    rq_tanh_norm = 2 #  Set to 0 for no RQ scaling, 1 for RQ = tanh(RQ), 2 for both!
+    rq_tanh_norm = 1 #  Set to 0 for no RQ scaling, 1 for RQ = tanh(RQ), 2 for both!
+    #phase = 0.05 # phase used in tanh function
     num_pulses_per_event = 10
 
     num_events = rq['pulse_classification'].shape[1]
@@ -57,9 +58,10 @@ def get_data(dataset_list, fields,use_these_classifiers):
             rq_norm_factor = np.max(abs(rq[pulse_rq_name]))
         pulse_rqs[:, i] = np.reshape(a=rq[pulse_rq_name].T, newshape=[1, -1])/rq_norm_factor   
     if rq_tanh_norm == 1:
-        pulse_rqs = np.tanh(pulse_rqs)
+        pulse_rqs = np.tanh(phase*pulse_rqs)
     elif rq_tanh_norm == 2:
-        pulse_rqs = np.append(pulse_rqs,np.tanh(pulse_rqs), axis = 1)
+        pulse_rqs = np.append(pulse_rqs,np.tanh(phase*pulse_rqs), axis = 1)
+        pulse_rq_list = np.append(pulse_rq_list,pulse_rq_list)
         # TODO: Add functionality to truncate rq outlier values?
 
     # Remove pulses from the RQ block that are not in the use_these_classifiers input

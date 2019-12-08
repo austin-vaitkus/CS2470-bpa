@@ -31,9 +31,12 @@ class Model(tf.keras.Model):
         # Model Layers
 #        self.conv1 = tf.keras.layers.Conv1D(self.num_filters, self.kernel_size, self.strides, padding='SAME', activation='relu')
         
-        self.dense1 = tf.keras.layers.Dense(self.num_classes * 4, activation='relu', dtype=tf.float32, name='dense1')
-        self.dense2 = tf.keras.layers.Dense(self.num_classes * 3, activation='relu', dtype=tf.float32, name='dense2')
-        self.dense3 = tf.keras.layers.Dense(self.num_classes * 2, activation='relu', dtype=tf.float32, name='dense3')
+        self.dense1 = tf.keras.layers.Dense(self.num_classes * 4, dtype=tf.float32, name='dense1')
+        self.BN1 = tf.keras.layers.BatchNormalization(trainable = False)
+        self.dense2 = tf.keras.layers.Dense(self.num_classes * 3, dtype=tf.float32, name='dense2')
+        self.BN2 = tf.keras.layers.BatchNormalization(trainable = False)
+        self.dense3 = tf.keras.layers.Dense(self.num_classes * 2, dtype=tf.float32, name='dense3')
+        self.BN3 = tf.keras.layers.BatchNormalization(trainable = False)
         self.dense4 = tf.keras.layers.Dense(self.num_classes, dtype=tf.float32, name='dense4')
 
         # Initialize Optimizer
@@ -56,9 +59,9 @@ class Model(tf.keras.Model):
 #        conv1_output_flat = tf.reshape(conv1_output,[self.batch_size,-1])
 #        dense4_output = self.dense4(conv1_output_flat)
         
-        dense1_output = self.dense1(inputs)
-        dense2_output = self.dense2(dense1_output)
-        dense3_output = self.dense3(dense2_output)
+        dense1_output = tf.nn.leaky_relu(self.BN1(self.dense1(inputs)))
+        dense2_output = tf.nn.leaky_relu(self.BN2(self.dense2(dense1_output)))
+        dense3_output = tf.nn.leaky_relu(self.BN3(self.dense3(dense2_output)))
         dense4_output = self.dense4(dense3_output)
 
         # Probabilities of each classification
@@ -109,8 +112,8 @@ def train(model, inputs, labels):
     if shuffle_per_epoch:
         shuffle_index = np.arange(labels.shape[0])
         np.random.shuffle(shuffle_index)
-        shuf_inputs = inputs[shuffle_index,:] #Not used - should say inputs = inputs, instead?
-        shuf_labels = labels[shuffle_index] # same
+        inputs = inputs[shuffle_index,:] 
+        labels = labels[shuffle_index] 
 
     # Initialize variables
     t = time.time()
@@ -214,10 +217,9 @@ def main():
     dataset_switch = 2 # Use 2 for standard Kr dataset.
     RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
-    epochs = 15  # num of times during training to loop over all data for an independent training trial.
+    epochs = 10  # num of times during training to loop over all data for an independent training trial.
     num_trials = 5  # Number of independent training/testing runs (trials) to perform
-    use_log_rqs = 1 # 0 for input = RQs, 1 for input = log(RQs), 2 for input = np.append(RQs, log(RQs))
-
+   
     # Select the dataset to use
     if dataset_switch == 0:
         dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
