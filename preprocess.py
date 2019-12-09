@@ -7,7 +7,7 @@ import sys
 
 from scipy import io
 
-def get_data(dataset_list, fields,use_these_classifiers, phase = 0.0075):
+def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
     """
 	Given a file path and a list of RQs returns the data for the specified dataset and RQs.
 	:param file_path: file path for inputs and labels. Trial set is '/data/lux10_20160627T0824_cp24454'
@@ -75,15 +75,21 @@ def get_data(dataset_list, fields,use_these_classifiers, phase = 0.0075):
     # each event. This can be used later to re-associate pulses from an event together.
     pulse_event_index = np.repeat(range(num_events), 10)
 
+    # Get pulse_rqs and pulse_event_index for unidentified pulses (label = 5)
+    # This will be used to test how our network classifies these pulses
+    cut_label_5_indices = np.where(labels==5)[0]
+    test_label_5 = labels[cut_label_5_indices]-5
+    test_rqs_5 = pulse_rqs[cut_label_5_indices]
+    test_event_index_5 = pulse_event_index[cut_label_5_indices]
+
     # Delete those pulse_rq colums, labels, and event indexes where the pulse was empty
     pulse_rqs = np.delete(arr=pulse_rqs, obj=empty_pulse_index, axis=0)
     labels = np.delete(arr=labels, obj=empty_pulse_index, axis=0)
     pulse_event_index = np.delete(arr=pulse_event_index, obj=empty_pulse_index, axis=0)
 
     # Renumber labels to take in any use_these_classifiers 
-    # For use_these_classifiers = (1,2,4) it will renumber labels for 1,2,4 to 0,1,2    
+    # EXAMPLE: For use_these_classifiers = (1,2,4) it will renumber labels for 1,2,4 to 0,1,2    
     for i in range(len(list(use_these_classifiers))):
-        print(i)
         labels[labels==list(use_these_classifiers)[i]] = i
 
     num_real_pulses = len(labels)
@@ -107,4 +113,5 @@ def get_data(dataset_list, fields,use_these_classifiers, phase = 0.0075):
 
 
     print('Pulse RQ data block pre-processed')
-    return train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_pulse_event_index, pulse_rq_list
+    return train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_pulse_event_index, test_label_5, test_rqs_5, test_event_index_5, pulse_rq_list
+
