@@ -285,8 +285,8 @@ def main():
 
         # Load and preprocess the data
         train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, _ = get_data(dataset_list, fields, use_these_classifiers)
-        train_labels = train_labels - 1
-        test_labels = test_labels - 1
+        # train_labels = train_labels - 1
+        # test_labels = test_labels - 1
         
         # Define model
         num_classes = len(use_these_classifiers)
