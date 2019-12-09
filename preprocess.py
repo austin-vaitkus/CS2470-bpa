@@ -3,6 +3,7 @@ import tensorflow as tf
 import os
 import aLib
 from aLib import dp
+import sys
 
 from scipy import io
 
@@ -28,7 +29,6 @@ def get_data(dataset_list, fields,use_these_classifiers, phase = 0.0075):
     test_set_fraction = 0.1
     rq_norm_mode = 0 #  Set to 0 for no normalization of RQs, 1 for normalization by the 80th percentile largest value, and 2 for normalization via the abs(maximum value)
     rq_tanh_norm = 1 #  Set to 0 for no RQ scaling, 1 for RQ = tanh(RQ), 2 for both!
-    #phase = 0.05 # phase used in tanh function
     num_pulses_per_event = 10
 
     num_events = rq['pulse_classification'].shape[1]
@@ -79,6 +79,12 @@ def get_data(dataset_list, fields,use_these_classifiers, phase = 0.0075):
     pulse_rqs = np.delete(arr=pulse_rqs, obj=empty_pulse_index, axis=0)
     labels = np.delete(arr=labels, obj=empty_pulse_index, axis=0)
     pulse_event_index = np.delete(arr=pulse_event_index, obj=empty_pulse_index, axis=0)
+
+    # Renumber labels to take in any use_these_classifiers 
+    # For use_these_classifiers = (1,2,4) it will renumber labels for 1,2,4 to 0,1,2    
+    for i in range(len(list(use_these_classifiers))):
+        print(i)
+        labels[labels==list(use_these_classifiers)[i]] = i
 
     num_real_pulses = len(labels)
 
