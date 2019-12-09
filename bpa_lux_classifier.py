@@ -148,12 +148,15 @@ def train(model, inputs, labels):
     return None
 
 
-def test(model, inputs, labels):
+def test(model, inputs, labels, is_testing_5 = False):
     
 
     # Initialize variables
     print_every_x_percent = 20
-    print_test_diagnostics = True
+    if is_testing_5:
+        print_test_diagnostics = False
+    else:
+        print_test_diagnostics = True
 
     print_counter = print_every_x_percent
     batch_counter = 0
@@ -178,14 +181,22 @@ def test(model, inputs, labels):
         if 100 * start / inputs.shape[0] >= print_counter:
             print_counter += print_every_x_percent  # Update print counter
             print('{0:.0%}'.format(print_counter/100))
-            for i in range(model.num_classes):
-                number_of_pulses_in_label = np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)].shape[0]
-                number_correctly_identified = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1)==i).sum()
-                print('Label = {0:1d}. {1:.0%} Correctly Predicted = {2:1d}/{3:1d}'.format(i,number_correctly_identified/number_of_pulses_in_label,number_correctly_identified,number_of_pulses_in_label))
+            if is_testing_5:
+                prediction = np.argmax(np.array(probabilities),axis=1)
+                for i in range(model.num_classes):
+                    number_of_pulses_in_label_predicted = np.sum(prediction==i)
+                    print('Number of Label = {0:1d} predicted is : {1:1d}'.format(i,number_of_pulses_in_label_predicted)) 
+                    
                 
-                if number_of_pulses_in_label != number_correctly_identified:
-                    incorrect_predictions = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1))
-                    print('\t Label =',i,'\n \t Labels:',incorrect_predictions[incorrect_predictions!=i])
+            else:
+                for i in range(model.num_classes):
+                    number_of_pulses_in_label = np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)].shape[0]
+                    number_correctly_identified = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1)==i).sum()
+                    print('Label = {0:1d}. {1:.0%} Correctly Predicted = {2:1d}/{3:1d}'.format(i,number_correctly_identified/number_of_pulses_in_label,number_correctly_identified,number_of_pulses_in_label))
+                    
+                    if number_of_pulses_in_label != number_correctly_identified:
+                        incorrect_predictions = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1))
+                        print('\t Label =',i,'\n \t Labels:',incorrect_predictions[incorrect_predictions!=i])
 
 
     loss /= batch_counter
@@ -281,10 +292,11 @@ def main():
     #    rqs, labels, pulse_event_index  = get_data(dataset_list, fields)
 
     trial_test_acc = []
+    trial_test_acc_5 = []
     for trial_index in range(num_trials):
 
         # Load and preprocess the data
-        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, _ = get_data(dataset_list, fields, use_these_classifiers)
+        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_labels_5, test_rqs_5, test_event_index_5, _ = get_data(dataset_list, fields, use_these_classifiers)
         # train_labels = train_labels - 1
         # test_labels = test_labels - 1
         
@@ -299,6 +311,11 @@ def main():
             test_acc = test(model, test_rqs, test_labels)
             print("Epoch {0:1d} Complete.\nTotal Time = {1:2.1f} minutes, Testing Accuracy = {2:.0%}\n\n".format(epoch + 1, (time.time() - t) / 60, test_acc))
         trial_test_acc.append(test_acc)
+
+        test_acc_5 = test(model, test_rqs_5, test_labels_5, is_testing_5 = True)
+        trial_test_acc_5.append(test_acc_5)
+        
+        
 
     # Summarize the num_trials independent trials with a list of final testing accuracies
     print('\n%i independent training trials complete. Final testing accuracies:' % num_trials)
