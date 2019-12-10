@@ -136,9 +136,9 @@ class Model(tf.keras.Model):
 
         plt.ion()
 
+        # fig, axs = plt.subplots(1, 1, figsize=(18, 16))
         for i in range(4):
-            fig = plt.figure(i+1)
-            #fig, axs = plt.subplots(1, 1, figsize=(18, 16))
+            fig = plt.figure(i+1, figsize=(18,16))
 
             # Plot the lpc-known examples of this class:
             cutoff = len(lpc_known_RQs)
@@ -156,6 +156,7 @@ class Model(tf.keras.Model):
             plt.xlim(x_min,x_max)
             plt.ylim(y_min,y_max)
 
+            plt.show()
             if save_figs:
                 now = time.localtime()
                 timestamp = int(1E8 * (now.tm_year - 2000) + 1E6 * now.tm_mon + 1E4 * now.tm_mday + 1E2 * now.tm_hour + now.tm_min)
