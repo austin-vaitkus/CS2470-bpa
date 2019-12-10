@@ -48,9 +48,56 @@ elif RQ_list_switch == 3:
               ]
 use_these_classifiers = (1, 2, 3, 4)
 
-train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_label_5, test_rqs_5, test_event_index_5,pulse_index_unique_5 = get_data(dataset_list, fields, use_these_classifiers)
+train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_label_5, test_rqs_5, test_event_index_5, test_order_index_5, pulse_rq_list,rq = get_data(dataset_list, fields, use_these_classifiers)
+
 
 #%%
+
+sumpod_data_small = './data/sumpods_small.npy'
+sumpod_data_big = './data/sumpods_big.npy'
+sumpods = np.load(sumpod_data_small, allow_pickle = True)
+
+sumpodIndex_small = list(np.load('./data/events_forsumpods_small.npy', allow_pickle = True))
+sumpodIndex_big = list(np.load('./data/events_forsumpods_big.npy', allow_pickle = True))
+
+
+#%%
+# Note, use RQ list 3 for visualization
+
+def pulseViewer(event_index, pulse_index):
+    sumpod_viz = sumpods[sumpodIndex_small.index(event_index)]
+    
+    pulse_start = rq.pulse_start_samples[:,event_index][pulse_index]
+    pulse_end = rq.pulse_end_samples[:,event_index][pulse_index]
+    samples = np.linspace(-50000,50000,len(sumpod_viz))
+    
+    total_time = pulse_end - pulse_start
+    buffer = 1 * total_time
+    
+    
+    plt.plot(samples,sumpod_viz)
+    plt.xlim((pulse_start-buffer, pulse_end+buffer));
+    plt.ylim((0,10));
+
+
+    print(pulse_start, pulse_end)   
+
+    return None
+
+# Choose an event and a pulse index [0,9] that you'd like to view
+viable_event_index = list(set(sumpodIndex_small).intersection(test_event_index_5))
+event_index = viable_event_index[2]
+pulse_index = int(test_order_index_5[0])
+
+
+# Run the visualization
+
+pulseViewer(event_index,pulse_index)
+
+#%%
+
+# Currently nonsense
+
 
 # class1 = [True if x == 1 else False for x in train_labels]
 # class2 = [True if x == 2 else False for x in train_labels]
@@ -72,64 +119,3 @@ train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_in
 #     plt.yscale('linear')
 #     plt.legend()
 #     plt.show()
-
-#%%
-sumpod_data_small = './data/sumpods_small.npy'
-sumpod_data_big = './data/sumpods_big.npy'
-sumpods = np.load(sumpod_data_small, allow_pickle = True)
-
-sumpodIndex_small = list(np.load('./data/events_forsumpods_small.npy', allow_pickle = True))
-sumpodIndex_big = list(np.load('./data/events_forsumpods_big.npy', allow_pickle = True))
-
-all_event_index = np.concatenate((train_event_index,test_event_index))
-all_rqs = np.concatenate((train_rqs,test_rqs))
-all_labels = np.concatenate((train_labels,test_labels))
-
-#%%
-
-#TODO: pulse viewing... currently does not work
-def pulseViewer(pulse_index, sumpods, use_5s = True):
-    
-    rq_start = 0
-    rq_end = 1
-    rq_aft_t1_samples = 2
-    
-
-    #First, find the event:
-    event_index = list(pulse_IDs).index(pulse_index)
-    
-    # Now select the corresponding sumpod for that event
-    # Here, I'm choosing from a list of events ('test_events') 
-    # that I have previously declared as having 5s in them.
-    # The order is important, that's why it's done this weird 
-    sumpod_viz = sumpods[sumpod_event_index.index(event_index)]
-    
-    # Now we want to find the corresponding rq values for that event
-        
-    pulse_pick = list(rq_event_index).index(event_index)
-    
-    pulse_start = int(rqs[pulse_pick,rq_start]) 
-    pulse_end = int(rqs[pulse_pick,rq_end]) 
-    pulse_50 = int(rqs[pulse_pick,rq_aft_t1_samples]) 
-
-    # Plot the results
-    plt.plot(sumpod_viz, label = event_index)
-    plt.xlim([pulse_start,pulse_end])
-    plt.legend()
-    plt.xlabel(pulse_50)
-    plt.show()
-    
-    return None
-
-
-
-# S2listindex = list(set(all_event_index[all_labels[:,0]==2]).intersection(eventIndex5_small))
-# #S2listindex[0:100]
-# #eventIndex5_small[0:10]
-
-# for i in S2listindex[0:10]:
-#     pulseViewer(i,
-#                 eventIndex5_small, sumpods,
-#                 all_event_index, all_rqs)
-    
-pulseViewer(pulse_index_unique_5[1006],sumpods)
