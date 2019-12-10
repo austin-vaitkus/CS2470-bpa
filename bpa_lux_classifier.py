@@ -1,13 +1,12 @@
-import os
-import sys
 import numpy as np
 import time
-import subprocess
-import tensorflow as tf
+
 import matplotlib.pyplot as plt
-import aLib
-from aLib import dp
+import numpy as np
+import tensorflow as tf
 from preprocess import get_data
+# Visualization imports
+from sklearn.decomposition import PCA
 
 
 ###################################
@@ -91,6 +90,66 @@ class Model(tf.keras.Model):
 		"""
         correct_predictions = tf.equal(tf.argmax(probabilities, 1), np.transpose(labels))
         return (tf.reduce_mean(tf.cast(correct_predictions, dtype=tf.float32)))
+
+    def pca(self, lpc_known_RQs, lpc_unknown_RQs):
+        """
+        Runs inputted events through most of the trained network, then applies PCA to visualize their embeddings after the penultmate layer.
+
+        :param lpc_known_RQs: a batch of LPC-identified (class 1,2,3 or 4) RQ pulses of size [num_examples x num_RQs]
+        :param lpc_unknown_RQs: a batch of LPC-unidentified (class 5) RQ pulses of size [num_examples x num_RQs]
+        :return: None
+        """
+        # Concat the two pulse populations together temporarily:
+        inputs = tf.concat((lpc_known_RQs, lpc_unknown_RQs), axis=0)
+
+        # Pass inputted events through most of the network
+        dense1_output = tf.nn.leaky_relu(self.BN1(self.dense1(inputs)))
+        dense2_output = tf.nn.leaky_relu(self.BN2(self.dense2(dense1_output)))
+        embeddings = self.BN3(self.dense3(dense2_output))
+
+        # Grab the network's final outputs for labels as well. Runs from 0 to 3.
+        net_labels = tf.argmax(self.call(inputs), 1)
+
+        makeflat = PCA(n_components=2)
+        # Reduce from num_RQs to 2 dimensions
+        vectors = makeflat.fit_transform(embeddings)
+
+        # Plot the 2D embeddings
+        x_vec = vectors[:, 0]
+        y_vec = vectors[:, 1]
+
+        # Find ranges that encompass most of the data (no skewing for massive outliers)
+        low_p = 0.5
+        high_p = 99.5
+        margin_factor = 0.2
+        x_min = np.percentile(x_vec, low_p) - margin_factor*(np.percentile(x_vec, high_p) - np.percentile(x_vec, low_p))
+        x_max = np.percentile(x_vec, high_p) + margin_factor*(np.percentile(x_vec, high_p) - np.percentile(x_vec, low_p))
+        y_min = np.percentile(y_vec, low_p) - margin_factor*(np.percentile(y_vec, high_p) - np.percentile(y_vec, low_p))
+        y_max = np.percentile(y_vec, high_p) + margin_factor*(np.percentile(y_vec, high_p) - np.percentile(y_vec, low_p))
+
+        plt_rq_names = ['S1s', 'S2s', 'Single Photoelectrons', 'Single Electrons']
+        f, axs = plt.subplots(1,1,figsize=(18,16))
+        for i in range(4):
+
+            # Plot the lpc-known examples of this class:
+            cutoff = len(lpc_known_RQs)
+
+            x_known = x_vec[:cutoff][net_labels[:cutoff] == i]
+            y_known = y_vec[:cutoff][net_labels[:cutoff] == i]
+            x_unknown = x_vec[cutoff:][net_labels[cutoff:] == i]
+            y_unknown = y_vec[cutoff:][net_labels[cutoff:] == i]
+
+            plt.scatter(x_vec, y_vec, c='gray', s=1)  #Plot all pulses
+            plt.scatter(x_known, y_known, c='b', s=1) # Plot LPC-known pulses
+            plt.scatter(x_unknown, y_unknown, c='r', s=1, alpha=0.6) # Plot LPC-unknown pulses
+
+            plt.title('2D embedding projection LPC-classified (red) and LPC-unclassified (red)' + plt_rq_names[i])
+            plt.xlim(x_min,x_max)
+            plt.ylim(y_min,y_max)
+
+            plt.show()
+
+        return
 
 
 def train(model, inputs, labels):
@@ -311,9 +370,15 @@ def main():
             test_acc = test(model, test_rqs, test_labels)
             print("Epoch {0:1d} Complete.\nTotal Time = {1:2.1f} minutes, Testing Accuracy = {2:.0%}\n\n".format(epoch + 1, (time.time() - t) / 60, test_acc))
         trial_test_acc.append(test_acc)
+        print('Training complete.')
 
+        # Test distribution of LPC-unclassified pulses
+        print('Testing LPC-unclassified pulses:')
         test_acc_5 = test(model, test_rqs_5, test_labels_5, is_testing_5 = True)
         trial_test_acc_5.append(test_acc_5)
+
+        # Use PCA to visualize clustering populations for the LPC-unclassified pulses
+        model.pca(test_rqs, test_rqs_5)
         
         
 
