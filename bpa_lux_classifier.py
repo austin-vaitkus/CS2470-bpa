@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -91,14 +92,17 @@ class Model(tf.keras.Model):
         correct_predictions = tf.equal(tf.argmax(probabilities, 1), np.transpose(labels))
         return (tf.reduce_mean(tf.cast(correct_predictions, dtype=tf.float32)))
 
-    def pca(self, lpc_known_RQs, lpc_unknown_RQs):
+    def pca(self, lpc_known_RQs, lpc_unknown_RQs, save_figs=True, disp_figs=False):
         """
         Runs inputted events through most of the trained network, then applies PCA to visualize their embeddings after the penultmate layer.
 
         :param lpc_known_RQs: a batch of LPC-identified (class 1,2,3 or 4) RQ pulses of size [num_examples x num_RQs]
         :param lpc_unknown_RQs: a batch of LPC-unidentified (class 5) RQ pulses of size [num_examples x num_RQs]
+        :param save_figs: Set to True to save the embedding pca plots
+        :param disp_figs: Set to True to print the embedding pca plots to print to screen
         :return: None
         """
+
         # Concat the two pulse populations together temporarily:
         inputs = tf.concat((lpc_known_RQs, lpc_unknown_RQs), axis=0)
 
@@ -128,6 +132,8 @@ class Model(tf.keras.Model):
         y_max = np.percentile(y_vec, high_p) + margin_factor*(np.percentile(y_vec, high_p) - np.percentile(y_vec, low_p))
 
         plt_rq_names = ['S1', 'S2', 'Single Photoelectron', 'Single Electron']
+        plt_rq_abbrev = ['s1', 's2', 'sphe', 'se']
+
         f, axs = plt.subplots(1,1,figsize=(18,16))
         for i in range(4):
 
@@ -147,7 +153,15 @@ class Model(tf.keras.Model):
             plt.xlim(x_min,x_max)
             plt.ylim(y_min,y_max)
 
-            plt.show()
+            if disp_figs:
+                plt.show()
+
+            if save_figs:
+                now = time.localtime()
+                timestamp = int(1E8 * (now.tm_year - 2000) + 1E6 * now.tm_mon + 1E4 * now.tm_mday + 1E2 * now.tm_hour + now.tm_min)
+                if not os.path.exists('png/'):
+                    os.mkdir('png/')
+                plt.savefig('png/' + plt_rq_abbrev[i] + '_pulses_t' + str(timestamp) + '.png')
 
         return
 
@@ -287,8 +301,10 @@ def main():
     dataset_switch = 2 # Use 2 for standard Kr dataset.
     RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
-    epochs = 10  # num of times during training to loop over all data for an independent training trial.
+    epochs = 1 # num of times during training to loop over all data for an independent training trial.
     num_trials = 1  # Number of independent training/testing runs (trials) to perform
+    save_figs = True
+    disp_figs = False
    
     # Select the dataset to use
     if dataset_switch == 0:
@@ -296,7 +312,10 @@ def main():
     elif dataset_switch == 1:
         dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
     elif dataset_switch == 2:
-        dataset_list = ['lux10_20130425T1047']  # Run03 Kr83 dataset. Target ~10 Hz of Krypton.
+        dataset_list = ['lux10_20130425T1047']  # Run03 Kr83 dataset. Target ~10 Hz of Krypton. 330 MB
+    elif dataset_switch == 3:
+        dataset_list = ['lux10_20130425T1047_half']  # Run03 Kr83 dataset. Target ~10 Hz of Krypton. 2.4 GB
+
 
     # Decide which RQs to use. 1 for original LPC (1-to-1 comparison) vs 2 for larger list of RQs.
     if RQ_list_switch == 1:
@@ -378,7 +397,7 @@ def main():
         trial_test_acc_5.append(test_acc_5)
 
         # Use PCA to visualize clustering populations for the LPC-unclassified pulses
-        model.pca(test_rqs, test_rqs_5)
+        model.pca(test_rqs, test_rqs_5, save_figs=True, disp_figs=False)
         
         
 
