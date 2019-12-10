@@ -338,7 +338,9 @@ def main():
                   'prompt_fraction',  # OG LPC
                   'pulse_height_phe_per_sample',  # OG LPC
                   'file_number',  # OG LPC
-                  'pulse_classification']
+                  'pulse_classification',  # To be used as labels
+                  'pulse_start_samples']  # To be used for pulse ordering (for identifying pulses in traces)
+
     elif RQ_list_switch == 2:
         # RQs used by the standard LUX Pulse Classifier + Additional ones for better performance
         # Currently up-to-date with google sheets list as of 112719T1206
@@ -362,8 +364,8 @@ def main():
                   'cor_y_cm',
                   'file_number',  # OG LPC
                   # 's1s2pairing', # may help later for finding Kr events?
-                  'pulse_classification',
-                  ]
+                  'pulse_classification',  # To be used as labels
+                  'pulse_start_samples']  # To be used for pulse ordering (for identifying pulses in traces)
 
     #    # Create some variables for ease of broad event classification and population checking.
     #    pulse_classification = rq[0].pulse_classification
@@ -379,7 +381,7 @@ def main():
     for trial_index in range(num_trials):
 
         # Load and preprocess the data
-        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_labels_5, test_rqs_5, test_event_index_5, _ = get_data(dataset_list, fields, use_these_classifiers)
+        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_labels_5, test_rqs_5, test_event_index_5, test_order_index_5, _ = get_data(dataset_list, fields, use_these_classifiers)
         # train_labels = train_labels - 1
         # test_labels = test_labels - 1
         

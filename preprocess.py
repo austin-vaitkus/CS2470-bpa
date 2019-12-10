@@ -25,7 +25,6 @@ def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
     rq = dp.concatRQsWcuts([rqBasePath_list[0]], fields)
 
     # Break apart events into pulses, then compile these into a list while assigning them an event index for later association when we look at event structures.
-
     test_set_fraction = 0.1
     rq_norm_mode = 0 #  Set to 0 for no normalization of RQs, 1 for normalization by the 80th percentile largest value, and 2 for normalization via the abs(maximum value)
     rq_tanh_norm = 1 #  Set to 0 for no RQ scaling, 1 for RQ = tanh(RQ), 2 for both!
@@ -34,14 +33,21 @@ def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
     num_events = rq['pulse_classification'].shape[1]
     num_pulses_with_blanks = num_events * num_pulses_per_event
 
-    # Pull all N pulse labels out into one long N x 1 tensor
+
+    # Make an index for the nth pulse in the event. Since events are already time-sorted, this is simple.
+    pulse_order_index = np.zeros(shape=[10,num_events])
+    for i in range(10):
+        pulse_order_index[i,:] = i*np.ones([1,num_events])
+
+    # Pull all N pulse labels and order indices out into one long N x 1 tensor
     labels = np.reshape(a=rq['pulse_classification'].T, newshape=[-1,1])
+    pulse_order_index = np.reshape(pulse_order_index.T, newshape=[-1,1])
 
     # Locate pulse-based RQs. These will be of size 10 x N for N pulses
     pulse_rq_list = []
     for key, value in rq.items():
         # Check for rqs of shape 10 x N and EXCLUDE pulse_classification (already grabbed above as the labels
-        if np.array(rq[key]).shape == (10,num_events) and key != 'pulse_classification':
+        if np.array(rq[key]).shape == (10,num_events) and key != 'pulse_classification' and key != 'pulse_start_samples':
             pulse_rq_list.append(key)
 
     num_pulse_rqs = len(pulse_rq_list)
@@ -78,14 +84,17 @@ def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
     # Get pulse_rqs and pulse_event_index for unidentified pulses (label = 5)
     # This will be used to test how our network classifies these pulses
     cut_label_5_indices = np.where(labels==5)[0]
+
     test_label_5 = labels[cut_label_5_indices]-5
     test_rqs_5 = pulse_rqs[cut_label_5_indices]
     test_event_index_5 = pulse_event_index[cut_label_5_indices]
+    test_order_index_5 = pulse_order_index[cut_label_5_indices]
 
     # Delete those pulse_rq colums, labels, and event indexes where the pulse was empty
     pulse_rqs = np.delete(arr=pulse_rqs, obj=empty_pulse_index, axis=0)
     labels = np.delete(arr=labels, obj=empty_pulse_index, axis=0)
     pulse_event_index = np.delete(arr=pulse_event_index, obj=empty_pulse_index, axis=0)
+    #pulse_order_index = np.delete(arr=pulse_order_index, obj=empty_pulse_index, axis=0)
 
     # Renumber labels to take in any use_these_classifiers 
     # EXAMPLE: For use_these_classifiers = (1,2,4) it will renumber labels for 1,2,4 to 0,1,2    
@@ -100,18 +109,21 @@ def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
     pulse_rqs = pulse_rqs[shuffle_index,:]
     labels = labels[shuffle_index]
     pulse_event_index = pulse_event_index[shuffle_index]
+    pulse_order_index = pulse_order_index[shuffle_index]
 
     # Separate out training and test data. TODO: Makes sure to split cleanly on an event so we don't have events split between the two sets. Currently doesn't keep events together
     split_index = int(test_set_fraction*num_real_pulses)
     train_rqs = pulse_rqs[split_index:]
     train_labels = labels[split_index:]
     train_event_index = pulse_event_index[split_index:]
+    train_order_index = pulse_order_index[split_index:]
 
     test_rqs = pulse_rqs[:split_index]
     test_labels = labels[:split_index]
-    test_pulse_event_index = pulse_event_index[:split_index]
+    test_event_index = pulse_event_index[:split_index]
+    test_order_index = pulse_order_index[:split_index]
 
 
     print('Pulse RQ data block pre-processed')
-    return train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_pulse_event_index, test_label_5, test_rqs_5, test_event_index_5, pulse_rq_list
+    return train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_label_5, test_rqs_5, test_event_index_5, test_order_index_5, pulse_rq_list
 
