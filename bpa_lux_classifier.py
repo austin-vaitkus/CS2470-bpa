@@ -134,8 +134,11 @@ class Model(tf.keras.Model):
         plt_rq_names = ['S1', 'S2', 'Single Photoelectron', 'Single Electron']
         plt_rq_abbrev = ['s1', 's2', 'sphe', 'se']
 
-        f, axs = plt.subplots(1,1,figsize=(18,16))
+        plt.ion()
+
         for i in range(4):
+            fig = plt.figure(i+1)
+            #fig, axs = plt.subplots(1, 1, figsize=(18, 16))
 
             # Plot the lpc-known examples of this class:
             cutoff = len(lpc_known_RQs)
@@ -153,15 +156,16 @@ class Model(tf.keras.Model):
             plt.xlim(x_min,x_max)
             plt.ylim(y_min,y_max)
 
-            if disp_figs:
-                plt.show()
-
             if save_figs:
                 now = time.localtime()
                 timestamp = int(1E8 * (now.tm_year - 2000) + 1E6 * now.tm_mon + 1E4 * now.tm_mday + 1E2 * now.tm_hour + now.tm_min)
                 if not os.path.exists('png/'):
                     os.mkdir('png/')
-                plt.savefig('png/' + plt_rq_abbrev[i] + '_pulses_t' + str(timestamp) + '.png')
+                fig.savefig('png/' + plt_rq_abbrev[i] + '_pulses_t' + str(timestamp) + '.png')
+
+        if disp_figs:
+            plt.show()
+            #input('Displaying PCA plots. Press Enter to continue...')
 
         return
 
@@ -301,7 +305,7 @@ def main():
     dataset_switch = 2 # Use 2 for standard Kr dataset.
     RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
-    epochs = 1 # num of times during training to loop over all data for an independent training trial.
+    epochs = 10 # num of times during training to loop over all data for an independent training trial.
     num_trials = 1  # Number of independent training/testing runs (trials) to perform
     save_figs = True
     disp_figs = False
@@ -397,7 +401,7 @@ def main():
         trial_test_acc_5.append(test_acc_5)
 
         # Use PCA to visualize clustering populations for the LPC-unclassified pulses
-        model.pca(test_rqs, test_rqs_5, save_figs=True, disp_figs=False)
+        model.pca(test_rqs, test_rqs_5, save_figs=save_figs, disp_figs=disp_figs)
         
         
 
