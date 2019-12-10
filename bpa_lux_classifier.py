@@ -127,7 +127,7 @@ class Model(tf.keras.Model):
         y_min = np.percentile(y_vec, low_p) - margin_factor*(np.percentile(y_vec, high_p) - np.percentile(y_vec, low_p))
         y_max = np.percentile(y_vec, high_p) + margin_factor*(np.percentile(y_vec, high_p) - np.percentile(y_vec, low_p))
 
-        plt_rq_names = ['S1s', 'S2s', 'Single Photoelectrons', 'Single Electrons']
+        plt_rq_names = ['S1', 'S2', 'Single Photoelectron', 'Single Electron']
         f, axs = plt.subplots(1,1,figsize=(18,16))
         for i in range(4):
 
@@ -139,11 +139,11 @@ class Model(tf.keras.Model):
             x_unknown = x_vec[cutoff:][net_labels[cutoff:] == i]
             y_unknown = y_vec[cutoff:][net_labels[cutoff:] == i]
 
-            plt.scatter(x_vec, y_vec, c='gray', s=1)  #Plot all pulses
+            plt.scatter(x_vec, y_vec, c='gray', s=1)  # Plot all pulses
             plt.scatter(x_known, y_known, c='b', s=1) # Plot LPC-known pulses
-            plt.scatter(x_unknown, y_unknown, c='r', s=1, alpha=0.6) # Plot LPC-unknown pulses
+            plt.scatter(x_unknown, y_unknown, c='r', s=1, alpha=1) # Plot LPC-unknown pulses
 
-            plt.title('2D embedding projection LPC-classified (red) and LPC-unclassified (red)' + plt_rq_names[i])
+            plt.title('2D embedding projection for LPC-classified (blue) and LPC-unclassified (red) ' + plt_rq_names[i] + ' pulses')
             plt.xlim(x_min,x_max)
             plt.ylim(y_min,y_max)
 
@@ -288,7 +288,7 @@ def main():
     RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
     epochs = 10  # num of times during training to loop over all data for an independent training trial.
-    num_trials = 5  # Number of independent training/testing runs (trials) to perform
+    num_trials = 1  # Number of independent training/testing runs (trials) to perform
    
     # Select the dataset to use
     if dataset_switch == 0:
