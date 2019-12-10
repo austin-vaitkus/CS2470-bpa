@@ -6,11 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from preprocess import get_data
-# Visualization imports
-from sklearn.decomposition import PCA
+from pca import pca_analyze
 
-
-###################################
 
 class Model(tf.keras.Model):
     def __init__(self, num_classes):
@@ -51,14 +48,6 @@ class Model(tf.keras.Model):
         """
 
         # Forward pass on inputs
-
-
-#        # Conv1d attempt
-#        test_inputs = tf.reshape(inputs,(inputs.shape[0],inputs.shape[1],1))
-#        conv1_output = self.conv1(test_inputs)
-#        conv1_output_flat = tf.reshape(conv1_output,[self.batch_size,-1])
-#        dense4_output = self.dense4(conv1_output_flat)
-        
         dense1_output = tf.nn.leaky_relu(self.BN1(self.dense1(inputs)))
         dense2_output = tf.nn.leaky_relu(self.BN2(self.dense2(dense1_output)))
         dense3_output = tf.nn.leaky_relu(self.BN3(self.dense3(dense2_output)))
@@ -92,83 +81,7 @@ class Model(tf.keras.Model):
         correct_predictions = tf.equal(tf.argmax(probabilities, 1), np.transpose(labels))
         return (tf.reduce_mean(tf.cast(correct_predictions, dtype=tf.float32)))
 
-    def pca(self, lpc_known_RQs, lpc_unknown_RQs, save_figs=True, disp_figs=False):
-        """
-        Runs inputted events through most of the trained network, then applies PCA to visualize their embeddings after the penultmate layer.
 
-        :param lpc_known_RQs: a batch of LPC-identified (class 1,2,3 or 4) RQ pulses of size [num_examples x num_RQs]
-        :param lpc_unknown_RQs: a batch of LPC-unidentified (class 5) RQ pulses of size [num_examples x num_RQs]
-        :param save_figs: Set to True to save the embedding pca plots
-        :param disp_figs: Set to True to print the embedding pca plots to print to screen
-        :return: None
-        """
-
-        # Concat the two pulse populations together temporarily:
-        inputs = tf.concat((lpc_known_RQs, lpc_unknown_RQs), axis=0)
-
-        # Pass inputted events through most of the network
-        dense1_output = tf.nn.leaky_relu(self.BN1(self.dense1(inputs)))
-        dense2_output = tf.nn.leaky_relu(self.BN2(self.dense2(dense1_output)))
-        embeddings = self.BN3(self.dense3(dense2_output))
-
-        # Grab the network's final outputs for labels as well. Runs from 0 to 3.
-        net_labels = tf.argmax(self.call(inputs), 1)
-
-        makeflat = PCA(n_components=2)
-        # Reduce from num_RQs to 2 dimensions
-        vectors = makeflat.fit_transform(embeddings)
-
-        # Plot the 2D embeddings
-        x_vec = vectors[:, 0]
-        y_vec = vectors[:, 1]
-
-        # Find ranges that encompass most of the data (no skewing for massive outliers)
-        low_p = 0.5
-        high_p = 99.5
-        margin_factor = 0.2
-        x_min = np.percentile(x_vec, low_p) - margin_factor*(np.percentile(x_vec, high_p) - np.percentile(x_vec, low_p))
-        x_max = np.percentile(x_vec, high_p) + margin_factor*(np.percentile(x_vec, high_p) - np.percentile(x_vec, low_p))
-        y_min = np.percentile(y_vec, low_p) - margin_factor*(np.percentile(y_vec, high_p) - np.percentile(y_vec, low_p))
-        y_max = np.percentile(y_vec, high_p) + margin_factor*(np.percentile(y_vec, high_p) - np.percentile(y_vec, low_p))
-
-        plt_rq_names = ['S1', 'S2', 'Single Photoelectron', 'Single Electron']
-        plt_rq_abbrev = ['s1', 's2', 'sphe', 'se']
-
-        plt.ion()
-
-        # fig, axs = plt.subplots(1, 1, figsize=(18, 16))
-        for i in range(4):
-            fig = plt.figure(i+1, figsize=(18,16))
-
-            # Plot the lpc-known examples of this class:
-            cutoff = len(lpc_known_RQs)
-
-            x_known = x_vec[:cutoff][net_labels[:cutoff] == i]
-            y_known = y_vec[:cutoff][net_labels[:cutoff] == i]
-            x_unknown = x_vec[cutoff:][net_labels[cutoff:] == i]
-            y_unknown = y_vec[cutoff:][net_labels[cutoff:] == i]
-
-            plt.scatter(x_vec, y_vec, c='gray', s=1)  # Plot all pulses
-            plt.scatter(x_known, y_known, c='b', s=1) # Plot LPC-known pulses
-            plt.scatter(x_unknown, y_unknown, c='r', s=1, alpha=1) # Plot LPC-unknown pulses
-
-            plt.title('2D embedding projection for LPC-classified (blue) and LPC-unclassified (red) ' + plt_rq_names[i] + ' pulses')
-            plt.xlim(x_min,x_max)
-            plt.ylim(y_min,y_max)
-
-            plt.show()
-            if save_figs:
-                now = time.localtime()
-                timestamp = int(1E8 * (now.tm_year - 2000) + 1E6 * now.tm_mon + 1E4 * now.tm_mday + 1E2 * now.tm_hour + now.tm_min)
-                if not os.path.exists('png/'):
-                    os.mkdir('png/')
-                fig.savefig('png/' + plt_rq_abbrev[i] + '_pulses_t' + str(timestamp) + '.png')
-
-        if disp_figs:
-            plt.show()
-            #input('Displaying PCA plots. Press Enter to continue...')
-
-        return
 
 
 def train(model, inputs, labels):
@@ -306,7 +219,7 @@ def main():
     dataset_switch = 2 # Use 2 for standard Kr dataset.
     RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
-    epochs = 10 # num of times during training to loop over all data for an independent training trial.
+    epochs = 2 # num of times during training to loop over all data for an independent training trial.
     num_trials = 1  # Number of independent training/testing runs (trials) to perform
     save_figs = True
     disp_figs = False
@@ -404,9 +317,7 @@ def main():
         trial_test_acc_5.append(test_acc_5)
 
         # Use PCA to visualize clustering populations for the LPC-unclassified pulses
-        model.pca(test_rqs, test_rqs_5, save_figs=save_figs, disp_figs=disp_figs)
-        
-        
+        pca_analyze(model, test_rqs, test_rqs_5, save_figs=save_figs, disp_figs=disp_figs)
 
     # Summarize the num_trials independent trials with a list of final testing accuracies
     print('\n%i independent training trials complete. Final testing accuracies:' % num_trials)
