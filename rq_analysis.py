@@ -94,18 +94,6 @@ def pulseViewer(pulse_index, sumpods, use_5s = True):
     rq_end = 1
     rq_aft_t1_samples = 2
     
-    if use_5s:
-        sumpod_event_index = sumpodIndex_small
-        pulse_IDs = pulse_index_unique 
-        rq_event_index = test_event_index_5
-        rqs = test_rqs_5
-    else:
-        sumpod_event_index = sumpodIndex_small
-        pulse_IDs = pulse_index_unique
-        rq_event_index = all_event_index
-        rqs = all_rqs
-
-
 
     #First, find the event:
     event_index = list(pulse_IDs).index(pulse_index)
