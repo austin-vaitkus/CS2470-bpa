@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from preprocess import get_data
-from pca import pca_analyze
+from pca_analysis import pca_analyze
 
 
 class Model(tf.keras.Model):
