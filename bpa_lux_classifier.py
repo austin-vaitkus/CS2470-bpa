@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 from preprocess import get_data
 from pca_analysis import pca_analyze, K_Nearest_Neighbor
+#from tensorflow.keras.models import model_from_json
 
 
 class Model(tf.keras.Model):
@@ -216,24 +217,37 @@ def main():
     # %%
 
     # Parameters for the run
-    dataset_switch = 3 # Use 2 for standard Kr dataset.
+    dataset_switch = 2 # Use 2 for standard Kr dataset.
     RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
-    epochs = 10 # num of times during training to loop over all data for an independent training trial.
+    epochs = 2 # num of times during training to loop over all data for an independent training trial.
     num_trials = 1  # Number of independent training/testing runs (trials) to perform
     save_figs = True
     disp_figs = False
     label_list = ('S1','S2','SPE','SE')
-   
+    load_trained_model = True
+    saved_trained_model_basename = 'Standard'
+    model_to_load = 'Standard_cp25541_330M_2ep'
+
+
     # Select the dataset to use
     if dataset_switch == 0:
         dataset_list = ["lux10_20160627T0824_cp24454"] # Short pulse DD data
+        data_vol = '291M'
+        cp='24454'
     elif dataset_switch == 1:
         dataset_list = ['lux10_20160802T1425']  # Small piece of Kr + DD data
+        data_vol = '34M'
+        cp='25166'
     elif dataset_switch == 2:
         dataset_list = ['lux10_20130425T1047']  # Run03 Kr83 dataset. Target ~10 Hz of Krypton. 330 MB
+        data_vol = '330M'
+        cp='25541'
     elif dataset_switch == 3:
         dataset_list = ['lux10_20130425T1047_half']  # Run03 Kr83 dataset. Target ~10 Hz of Krypton. 2.4 GB
+        cp='25541'
+        data_vol = '2.4G'
+
 
 
     # Decide which RQs to use. 1 for original LPC (1-to-1 comparison) vs 2 for larger list of RQs.
@@ -287,21 +301,36 @@ def main():
 
         # Load and preprocess the data
         train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_labels_5, test_rqs_5, test_event_index_5, test_order_index_5, _, _ = get_data(dataset_list, fields, use_these_classifiers)
-        # train_labels = train_labels - 1
-        # test_labels = test_labels - 1
-        
+
         # Define model
         num_classes = len(use_these_classifiers)
         model = Model(num_classes)
 
-        # Train model
-        t = time.time()
-        for epoch in range(epochs):
-            train(model, train_rqs, train_labels)
-            test_acc = test(model, test_rqs, test_labels)
-            print("Epoch {0:1d} Complete.\nTotal Time = {1:2.1f} minutes, Testing Accuracy = {2:.0%}\n\n".format(epoch + 1, (time.time() - t) / 60, test_acc))
-        trial_test_acc.append(test_acc)
-        print('Training complete.')
+        # Train new model or load old one
+        if load_trained_model:
+            # Load and "train" just enough data to properly instantiate the model.
+            train(model,train_rqs[0:(model.batch_size+1),:], train_labels[0:(model.batch_size+1)])
+            if model_to_load[-2:] != '.h5':
+                model_to_load = model_to_load + '.h5'
+            model.load_weights('models/' + model_to_load)
+        else:
+
+            # Train the model over desired num of epochs
+            t = time.time()
+            for epoch in range(epochs):
+                train(model, train_rqs, train_labels)
+                test_acc = test(model, test_rqs, test_labels)
+                print("Epoch {0:1d} Complete.\nTotal Time = {1:2.1f} minutes, Testing Accuracy = {2:.0%}\n\n".format(epoch + 1, (time.time() - t) / 60, test_acc))
+            trial_test_acc.append(test_acc)
+            print('Training complete.')
+
+            # Save final trained model
+            print('Saving model...')
+            if not os.path.exists('models/'):
+                os.mkdir('models/')
+            filename = saved_trained_model_basename + '_cp' + cp + '_' + data_vol + '_' + str(epochs) + 'epochs.h5'
+            model.save_weights('models/' + filename)
+            print('Saved model successfully in models/')
 
         # Test distribution of LPC-unclassified pulses
         print('Testing LPC-unclassified pulses:')

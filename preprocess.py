@@ -105,6 +105,7 @@ def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
 
     # Shuffle the three arrays on the same indexing
     shuffle_index = np.arange(num_real_pulses)
+    np.random.seed(12345)
     np.random.shuffle(shuffle_index)
     pulse_rqs = pulse_rqs[shuffle_index,:]
     labels = labels[shuffle_index]
