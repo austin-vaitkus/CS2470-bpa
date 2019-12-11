@@ -23,6 +23,8 @@ def pca_analyze(model, lpc_known_RQs, lpc_unknown_RQs, labels_to_plot, lpc_known
     :return: None
     """
 
+    print('Beginning PCA analysis...')
+
     # Concat the two pulse populations together temporarily:
     inputs = tf.concat((lpc_known_RQs, lpc_unknown_RQs), axis=0)
 

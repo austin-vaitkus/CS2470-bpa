@@ -5,9 +5,10 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+from namedlist import namedlist
+
 from preprocess import get_data
 from pca_analysis import pca_analyze, K_Nearest_Neighbor
-#from tensorflow.keras.models import model_from_json
 
 
 class Model(tf.keras.Model):
@@ -83,8 +84,6 @@ class Model(tf.keras.Model):
         return (tf.reduce_mean(tf.cast(correct_predictions, dtype=tf.float32)))
 
 
-
-
 def train(model, inputs, labels):
     """
     This function should train your model for one epoch
@@ -142,7 +141,6 @@ def train(model, inputs, labels):
 
 def test(model, inputs, labels, is_testing_5 = False, quiet_mode=True):
     
-
     # Initialize variables
     print_every_x_percent = 20
     if is_testing_5:
@@ -218,17 +216,27 @@ def main():
 
     # Parameters for the run
     dataset_switch = 2 # Use 2 for standard Kr dataset.
-    RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
-    use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
-    epochs = 2 # num of times during training to loop over all data for an independent training trial.
+    RQ_list_switch = 1  # Use 1 to train on basic RQs, 2 for all available relevant RQs
+    use_these_classifiers = (1, 2, 3, 4)  # Net will ONLY train on the listed LPC classes.
+    epochs = 10  # num of times during training to loop over all data for an independent training trial.
     num_trials = 1  # Number of independent training/testing runs (trials) to perform
-    save_figs = True
-    disp_figs = False
-    label_list = ('S1','S2','SPE','SE')
-    load_trained_model = True
-    saved_trained_model_basename = 'Standard'
-    model_to_load = 'Standard_cp25541_330M_2ep'
+    label_list = ('S1', 'S2', 'SPE', 'SE')
 
+    save_figs = True
+    save_model = True
+    save_test_set = True
+
+    disp_figs = False
+
+    saved_trained_model_basename = 'Standard'
+    load_trained_model = True
+    #model_to_load = 'Standard_cp25541_330M_2epochs'
+    model_to_load = 'Standard_cp25541_2.4G_10epochs'
+
+    # Enabling the below option to True OVERRIDES THE LOADED DATASET with the test data the model was trained on.
+    load_model_test_set = True
+    #model_test_set_to_load = 'Standard_cp25541_330M_2epochs'
+    model_test_set_to_load = 'Standard_cp25541_2.4G_10epochs'
 
     # Select the dataset to use
     if dataset_switch == 0:
@@ -247,8 +255,6 @@ def main():
         dataset_list = ['lux10_20130425T1047_half']  # Run03 Kr83 dataset. Target ~10 Hz of Krypton. 2.4 GB
         cp='25541'
         data_vol = '2.4G'
-
-
 
     # Decide which RQs to use. 1 for original LPC (1-to-1 comparison) vs 2 for larger list of RQs.
     if RQ_list_switch == 1:
@@ -313,6 +319,7 @@ def main():
             if model_to_load[-2:] != '.h5':
                 model_to_load = model_to_load + '.h5'
             model.load_weights('models/' + model_to_load)
+            print('Loaded previously trained model ' + model_to_load)
         else:
 
             # Train the model over desired num of epochs
@@ -324,19 +331,71 @@ def main():
             trial_test_acc.append(test_acc)
             print('Training complete.')
 
-            # Save final trained model
-            print('Saving model...')
-            if not os.path.exists('models/'):
-                os.mkdir('models/')
-            filename = saved_trained_model_basename + '_cp' + cp + '_' + data_vol + '_' + str(epochs) + 'epochs.h5'
-            model.save_weights('models/' + filename)
-            print('Saved model successfully in models/')
+            # Test distribution of LPC-unclassified pulses
+            print('Testing LPC-unclassified pulses:')
+            test_acc_5 = test(model, test_rqs_5, test_labels_5, is_testing_5=True, quiet_mode=True)
+            trial_test_acc_5.append(test_acc_5)
 
-        # Test distribution of LPC-unclassified pulses
-        print('Testing LPC-unclassified pulses:')
-        test_acc_5 = test(model, test_rqs_5, test_labels_5, is_testing_5=True, quiet_mode=True)
-        trial_test_acc_5.append(test_acc_5)
+            model_name = saved_trained_model_basename + '_cp' + cp + '_' + data_vol + '_' + str(epochs) + 'epochs'
 
+            if save_model:
+                # Save final trained model
+                print('Saving model...')
+                if not os.path.exists('models/'):
+                    os.mkdir('models/')
+                filename = model_name + '.h5'
+                model.save_weights('models/' + filename)
+                print('Saved model successfully in models/ as' + filename)
+
+            if save_test_set:
+                # Save associated test set to model
+                print('Saving test set...')
+                if not os.path.exists('models/test_sets'):
+                    os.mkdir('models/test_sets')
+
+                # Set up a namedlist with the test data. Setting use_slots to False enables addition of new fields dynamically.
+                dataset_fields = ['dataset_fields',
+                                  'model_name',
+                                  'test_rqs',
+                                  'test_rqs_5',
+                                  'test_labels',
+                                  'test_labels_5',
+                                  'test_event_index',
+                                  'test_event_index_5',
+                                  'test_order_index',
+                                  'test_order_index_5'
+                               ]
+                dataset = namedlist('dataset', dataset_fields, use_slots=False)
+                ds = dataset(*(eval(','.join(dataset_fields))))
+
+                filename = model_name + '_test_set.npz'
+                np.savez_compressed(file='models/test_sets/'+filename, data_array=ds, dataset_fields=dataset_fields)
+                print('Saved test set successfully in models/test_sets as ' + filename)
+
+        # Load test data from specified dataset if prompted.
+        if load_model_test_set:
+            if model_test_set_to_load[-8:] != 'test_set':
+                filename = model_test_set_to_load + '_test_set.npz'
+            else:
+                filename = filename + '.npz'
+
+            with np.load('models/test_sets/'+filename, allow_pickle=True) as unpacked:
+                data_array = unpacked['data_array']
+                dataset_fields = unpacked['dataset_fields']
+                dataset = namedlist('dataset', dataset_fields, use_slots=False)
+                ds = dataset(*[field for field in data_array])
+                model_name = ds.model_name
+                test_rqs = ds.test_rqs
+                test_rqs_5 = ds.test_rqs_5
+                test_labels = ds.test_labels
+                test_labels_5 = ds.test_labels_5
+                test_event_index = ds.test_event_index
+                test_event_index_5 = ds.test_event_index_5
+                test_order_index = ds.test_order_index
+                test_order_index_5 = ds.test_order_index_5
+
+
+        # Use net embeddings of test data to analyze 2D PCA.
         for pulse_type_index in range(4):
             # Use PCA to visualize clustering populations for the LPC-unclassified pulses
             labels_to_plot = pulse_type_index
@@ -344,19 +403,18 @@ def main():
     
             # Create a "train" set, including labels, for the nearest neighbor algorithm
             # Here, 0's are considered inliers, 1's are considered outliers
+            print('Beginning KNN analysis...')
             KNN_train = np.concatenate((pca_known, pca_unknown))
             KNN_labels = np.concatenate((np.zeros(len(pca_known)), np.ones(len(pca_unknown))))
-        
             K_Nearest_Neighbor(KNN_train, KNN_labels, pca_unknown, label_list[labels_to_plot])
+            print('KNN analysis complete.')
 
     # Summarize the num_trials independent trials with a list of final testing accuracies
     if num_trials>1:
         print('\n%i independent training trials complete. Final testing accuracies:' % num_trials)
         print(*np.array(trial_test_acc), sep='  ')
         print('Mean testing accuracy over all trials: %0.2f +/- %0.2f' % (np.average(trial_test_acc), np.std(trial_test_acc) ) )
-    else:
-        print('Training complete.')
-    
+
     
 if __name__ == '__main__':
     main()
