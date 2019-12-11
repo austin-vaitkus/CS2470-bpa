@@ -9,6 +9,7 @@ from sklearn.decomposition import PCA
 from sklearn import neighbors
 from matplotlib.colors import ListedColormap
 
+from matplotlib import path
 
 def pca_analyze(model, lpc_known_RQs, lpc_unknown_RQs, labels_to_plot, lpc_known_event_index, lpc_unknown_event_index, lpc_known_order_index, lpc_unknown_order_index, save_figs=True, disp_figs=False):
     """
@@ -210,3 +211,50 @@ def K_Nearest_Neighbor(known_points, labels, unknown_points, pulse_species, save
         fig.savefig('png/KNN/' + filename)
   
     return
+
+#%%
+
+def polyPath(polypath,xs, ys):
+
+    polypath = np.concatenate((polypath,polypath[0].reshape(-1,2)))
+
+    p = path.Path(polypath[:-1])
+    
+    xsys = np.array((xs,ys)).reshape((-1,2))
+    contained = p.contains_points(xsys)
+    notcontained = np.array([not i for i in contained])
+    
+    
+    # Plot also the points within and outside the polygon path
+    fig = plt.figure(figsize=(10, 10))
+    plt.scatter(xsys[:,0][notcontained],xsys[:,1][notcontained], color = 'gray', s = 10, label = 'Not Contained')
+    plt.scatter(xsys[:,0][contained],xsys[:,1][contained], color = 'blue', s = 10,label = 'Contained')
+    plt.plot(polypath[:,0],polypath[:,1], color = 'black', label = 'Path')
+    
+    # Find plot ranges that encompass most of the data (no skewing for massive outliers)
+    low_p = 0.5
+    high_p = 99.5
+    margin_factor = 0.25
+    x = xs
+    y = ys
+    x_min = np.percentile(x, low_p) - margin_factor * (np.percentile(x, high_p) - np.percentile(x, low_p))
+    x_max = np.percentile(x, high_p) + margin_factor * (np.percentile(x, high_p) - np.percentile(x, low_p))
+    y_min = np.percentile(y, low_p) - margin_factor * (np.percentile(y, high_p) - np.percentile(y, low_p))
+    y_max = np.percentile(y, high_p) + margin_factor * (np.percentile(y, high_p) - np.percentile(y, low_p))
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
+
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend()
+
+    return contained, notcontained
+
+xs = np.random.uniform(0,1,1000)
+ys = np.random.uniform(0,1,1000)
+polypath = np.array(((0.3,0.3), (0.3,0.5), (0.6,0.8), (0.8,0.3), (0.5,0.2)))
+
+c,nc = polyPath(polypath,xs,ys)
+
+
+ 
