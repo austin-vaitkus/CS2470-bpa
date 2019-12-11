@@ -7,10 +7,11 @@ import tensorflow as tf
 from sklearn.decomposition import PCA
 
 
-def pca_analyze(model, lpc_known_RQs, lpc_unknown_RQs, save_figs=True, disp_figs=False):
+def pca_analyze(model, lpc_known_RQs, lpc_unknown_RQs, labels_to_plot, lpc_known_event_index, lpc_unknown_event_index, lpc_known_order_index, lpc_unknown_order_index, save_figs=True, disp_figs=False):
     """
     Runs inputted events through most of the trained network, then applies PCA to visualize their embeddings after the penultmate layer.
 
+    :param model: The trained classification model from bpa_lux_classifier.py.
     :param lpc_known_RQs: a batch of LPC-identified (class 1,2,3 or 4) RQ pulses of size [num_examples x num_RQs]
     :param lpc_unknown_RQs: a batch of LPC-unidentified (class 5) RQ pulses of size [num_examples x num_RQs]
     :param save_figs: Set to True to save the embedding pca plots
@@ -21,17 +22,70 @@ def pca_analyze(model, lpc_known_RQs, lpc_unknown_RQs, save_figs=True, disp_figs
     # Concat the two pulse populations together temporarily:
     inputs = tf.concat((lpc_known_RQs, lpc_unknown_RQs), axis=0)
 
-    # Pass inputted events through most of the network
+    # Pass inputted events through the first 3 layers of trained model to extract functional embeddings
     dense1_output = tf.nn.leaky_relu(model.BN1(model.dense1(inputs)))
     dense2_output = tf.nn.leaky_relu(model.BN2(model.dense2(dense1_output)))
     embeddings = model.BN3(model.dense3(dense2_output))
-
     # Grab the network's final outputs for labels as well. Runs from 0 to 3.
     net_labels = tf.argmax(model.call(inputs), 1)
 
-    makeflat = PCA(n_components=2)
+    cutoff = len(lpc_known_RQs)
+    lpc_known_labels = net_labels[:cutoff]
+    lpc_unknown_labels = net_labels[cutoff:]
+    lpc_known_embeddings = embeddings[:cutoff, :]
+    lpc_unknown_embeddings = embeddings[cutoff:, :]
+
+
+    pca_known, pca_unknown = pca_plot_subset(lpc_known_embeddings, lpc_unknown_embeddings, lpc_known_labels, lpc_unknown_labels, labels_to_plot=labels_to_plot, save_figs=save_figs, disp_figs=disp_figs)
+
+
+    # Remove pulses that are not in the event indices for known events
+    del_pulse_index = []
+    for i in range(len(lpc_known_labels)):
+        if np.sum(labels_to_plot == lpc_known_labels[i]) == 0:
+            del_pulse_index.append(i)
+    lpc_known_embeddings = np.delete(arr=lpc_known_embeddings, obj=del_pulse_index, axis=0)
+    lpc_known_labels = np.delete(arr=lpc_known_labels, obj=del_pulse_index, axis=0)
+    lpc_known_event_index = np.delete(arr=lpc_known_event_index, obj=del_pulse_index, axis=0)
+    lpc_known_order_index = np.delete(arr=lpc_known_order_index, obj=del_pulse_index, axis=0)
+
+    # Remove pulses that are not in the event indices for unknown events
+    del_pulse_index = []
+    for i in range(len(lpc_unknown_labels)):
+        if np.sum(labels_to_plot == lpc_unknown_labels[i]) == 0:
+            del_pulse_index.append(i)
+    lpc_unknown_embeddings = np.delete(arr=lpc_unknown_embeddings, obj=del_pulse_index, axis=0)
+    lpc_unknown_labels = np.delete(arr=lpc_unknown_labels, obj=del_pulse_index, axis=0)
+    lpc_unknown_event_index = np.delete(arr=lpc_unknown_event_index, obj=del_pulse_index, axis=0)
+    lpc_unknown_order_index = np.delete(arr=lpc_unknown_order_index, obj=del_pulse_index, axis=0)
+
+
+    return lpc_known_embeddings, lpc_unknown_embeddings, pca_known, pca_unknown, lpc_known_labels, lpc_unknown_labels
+
+
+def pca_plot_subset(lpc_known_embeddings, lpc_unknown_embeddings, lpc_known_labels, lpc_unknown_labels, labels_to_plot=(0, 1, 2, 3), save_figs=True, disp_figs=False):
+
+    labels_to_plot = np.reshape(np.asarray(labels_to_plot), [-1])
+
+    # Remove pulses that are not in the labels_to_plot input in the lpc_known events
+    del_pulse_index = []
+    for i in range(len(lpc_known_labels)):
+        if np.sum(labels_to_plot == lpc_known_labels[i]) == 0:
+            del_pulse_index.append(i)
+    lpc_known_embeddings = np.delete(arr=lpc_known_embeddings, obj=del_pulse_index, axis=0)
+    lpc_known_labels = np.delete(arr=lpc_known_labels, obj=del_pulse_index, axis=0)
+
+    # Remove pulses that are not in the labels_to_plot input in the lpc_unknown events
+    del_pulse_index = []
+    for i in range(len(lpc_unknown_labels)):
+        if np.sum(labels_to_plot == lpc_unknown_labels[i]) == 0:
+            del_pulse_index.append(i)
+    lpc_unknown_embeddings = np.delete(arr=lpc_unknown_embeddings, obj=del_pulse_index, axis=0)
+    lpc_unknown_labels = np.delete(arr=lpc_unknown_labels, obj=del_pulse_index, axis=0)
+
     # Reduce from num_RQs to 2 dimensions
-    vectors = makeflat.fit_transform(embeddings)
+    makeflat = PCA(n_components=2)
+    vectors = makeflat.fit_transform(tf.concat((lpc_known_embeddings, lpc_unknown_embeddings), axis=0))
 
     # Plot the 2D embeddings
     x_vec = vectors[:, 0]
@@ -52,17 +106,21 @@ def pca_analyze(model, lpc_known_RQs, lpc_unknown_RQs, save_figs=True, disp_figs
     plt.ion()
 
     # fig, axs = plt.subplots(1, 1, figsize=(18, 16))
-    for i in range(4):
+
+    for i in labels_to_plot:
         fig = plt.figure(i + 1, figsize=(18, 16))
 
         # Plot the lpc-known examples of this class:
-        cutoff = len(lpc_known_RQs)
+        cutoff = len(lpc_known_labels)
 
-        x_known = x_vec[:cutoff][net_labels[:cutoff] == i]
-        y_known = y_vec[:cutoff][net_labels[:cutoff] == i]
-        x_unknown = x_vec[cutoff:][net_labels[cutoff:] == i]
-        y_unknown = y_vec[cutoff:][net_labels[cutoff:] == i]
+        x_known = x_vec[:cutoff][lpc_known_labels == i]
+        y_known = y_vec[:cutoff][lpc_known_labels == i]
+        x_unknown = x_vec[cutoff:][lpc_unknown_labels == i]
+        y_unknown = y_vec[cutoff:][lpc_unknown_labels == i]
 
+
+
+        plt.clf()
         plt.scatter(x_vec, y_vec, c='gray', s=1)  # Plot all pulses
         plt.scatter(x_known, y_known, c='b', s=1)  # Plot LPC-known pulses
         plt.scatter(x_unknown, y_unknown, c='r', s=1, alpha=1)  # Plot LPC-unknown pulses
@@ -77,10 +135,18 @@ def pca_analyze(model, lpc_known_RQs, lpc_unknown_RQs, save_figs=True, disp_figs
             timestamp = int(1E8 * (now.tm_year - 2000) + 1E6 * now.tm_mon + 1E4 * now.tm_mday + 1E2 * now.tm_hour + now.tm_min)
             if not os.path.exists('png/'):
                 os.mkdir('png/')
-            fig.savefig('png/' + plt_rq_abbrev[i] + '_pulses_t' + str(timestamp) + '.png')
+
+            # Decide on a name and save
+            indices_txt = str(labels_to_plot)
+            indices_txt = indices_txt.replace(" ","").replace("[","").replace("]","")
+            filename = plt_rq_abbrev[i] + '_pulses_over_labels_' + indices_txt + '_t' + str(timestamp) + '.png'
+            fig.savefig('png/' + filename)
 
     if disp_figs:
         plt.show()
         # input('Displaying PCA plots. Press Enter to continue...')
 
-    return
+    pca_known = vectors[:cutoff,:]
+    pca_unknown = vectors[cutoff:,:]
+    return pca_known, pca_unknown
+

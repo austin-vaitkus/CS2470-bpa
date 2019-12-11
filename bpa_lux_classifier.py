@@ -294,7 +294,7 @@ def main():
     for trial_index in range(num_trials):
 
         # Load and preprocess the data
-        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_labels_5, test_rqs_5, test_event_index_5, test_order_index_5, _ = get_data(dataset_list, fields, use_these_classifiers)
+        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_labels_5, test_rqs_5, test_event_index_5, test_order_index_5, _, _ = get_data(dataset_list, fields, use_these_classifiers)
         # train_labels = train_labels - 1
         # test_labels = test_labels - 1
         
@@ -317,7 +317,9 @@ def main():
         trial_test_acc_5.append(test_acc_5)
 
         # Use PCA to visualize clustering populations for the LPC-unclassified pulses
-        pca_analyze(model, test_rqs, test_rqs_5, save_figs=save_figs, disp_figs=disp_figs)
+        labels_to_plot = np.array([0,1,2,3])
+        lpc_known_embeddings, lpc_unknown_embeddings, pca_known, pca_unknown, lpc_known_labels, lpc_unknown_labels = pca_analyze(model, test_rqs, test_rqs_5, labels_to_plot, test_event_index, test_event_index_5, test_order_index, test_order_index_5, save_figs=save_figs, disp_figs=disp_figs)
+
 
     # Summarize the num_trials independent trials with a list of final testing accuracies
     print('\n%i independent training trials complete. Final testing accuracies:' % num_trials)
