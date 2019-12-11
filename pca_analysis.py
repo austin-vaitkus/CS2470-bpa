@@ -252,20 +252,28 @@ def polyPath(polypath, xs, ys):
 
 
 #%%
-def cutSelection(numCoord, xs, ys):
+def cutSelection(xs, ys):
     # numCoord = integer number of coordinates to create polypath over
     plt.plot(xs,ys,'.')
-    numCoord = int(numCoord)
 
-    polypath = np.zeros([numCoord,2])
-    
+
+    keep_going = True
+    polypath = []
+        
     # Prompt user for coordinates to cut over
-    for i in range(numCoord):
-        polypath[i,0] = input('Enter x coordinate %1i:\t'%(i+1))
-        polypath[i,1] = input('Enter y coordinate %1i:\t'%(i+1))
-        print('Coordinates selected', polypath[i])
-        return(polypath)
-
+    print('When you are done entering coordinates, just press enter for both x and y prompts.')
+    i = 0
+    while keep_going:
+        x_coord = input('Enter x coordinate %1i:\t'%(i+1))
+        y_coord = input('Enter y coordinate %1i:\t'%(i+1))
+        if np.logical_and(len(x_coord) == 0,len(y_coord) == 0):
+            keep_going = False
+            polypath = np.array(polypath)
+            print('All coordinates ',polypath)
+        else:
+            polypath.append([x_coord, y_coord])
+        i+=1
+    
     c,nc = polyPath(polypath,xs,ys)
 #%%
 # xs = np.random.uniform(0,1,1000)
