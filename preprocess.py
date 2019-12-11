@@ -101,7 +101,7 @@ def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
     pulse_rqs = np.delete(arr=pulse_rqs, obj=empty_pulse_index, axis=0)
     labels = np.delete(arr=labels, obj=empty_pulse_index, axis=0)
     pulse_event_index = np.delete(arr=pulse_event_index, obj=empty_pulse_index, axis=0)
-    #pulse_order_index = np.delete(arr=pulse_order_index, obj=empty_pulse_index, axis=0)
+    pulse_order_index = np.delete(arr=pulse_order_index, obj=empty_pulse_index, axis=0)
 
     # Renumber labels to take in any use_these_classifiers 
     # EXAMPLE: For use_these_classifiers = (1,2,4) it will renumber labels for 1,2,4 to 0,1,2    

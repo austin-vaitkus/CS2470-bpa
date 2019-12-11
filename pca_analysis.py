@@ -23,6 +23,8 @@ def pca_analyze(model, lpc_known_RQs, lpc_unknown_RQs, labels_to_plot, lpc_known
     :return: None
     """
 
+    print('Beginning PCA analysis...')
+
     # Concat the two pulse populations together temporarily:
     inputs = tf.concat((lpc_known_RQs, lpc_unknown_RQs), axis=0)
 
@@ -276,9 +278,9 @@ def cutSelection(xs, ys):
     
     c,nc = polyPath(polypath,xs,ys)
 #%%
-# xs = np.random.uniform(0,1,1000)
-# ys = np.random.uniform(0,1,1000)
-# polypath = np.array(((0.3,0.3), (0.3,0.5), (0.6,0.8), (0.8,0.3), (0.5,0.2)))
+xs = np.random.uniform(0,1,1000)
+ys = np.random.uniform(0,1,1000)
+cutSelection(xs, ys)
 
 
  
