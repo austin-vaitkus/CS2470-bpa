@@ -214,7 +214,7 @@ def K_Nearest_Neighbor(known_points, labels, unknown_points, pulse_species, save
 
 #%%
 
-def polyPath(polypath,xs, ys):
+def polyPath(polypath, xs, ys):
 
     polypath = np.concatenate((polypath,polypath[0].reshape(-1,2)))
 
@@ -250,11 +250,27 @@ def polyPath(polypath,xs, ys):
 
     return contained, notcontained
 
-xs = np.random.uniform(0,1,1000)
-ys = np.random.uniform(0,1,1000)
-polypath = np.array(((0.3,0.3), (0.3,0.5), (0.6,0.8), (0.8,0.3), (0.5,0.2)))
 
-c,nc = polyPath(polypath,xs,ys)
+#%%
+def cutSelection(numCoord):
+    # numCoord = integer number of coordinates to create polypath over
+    numCoord = int(numCoord)
+
+    polypath = np.zeros([numCoord,2])
+    
+    # Prompt user for coordinates to cut over
+    for i in range(numCoord):
+        polypath[i,0] = input('Enter x coordinate %1i:\t'%(i+1))
+        polypath[i,1] = input('Enter y coordinate %1i:\t'%(i+1))
+        print('Coordinates selected', polypath[i])
+    
+    return(polypath)
+
+    # c,nc = polyPath(coord,xs,ys)
+#%%
+# xs = np.random.uniform(0,1,1000)
+# ys = np.random.uniform(0,1,1000)
+# polypath = np.array(((0.3,0.3), (0.3,0.5), (0.6,0.8), (0.8,0.3), (0.5,0.2)))
 
 
  
