@@ -78,7 +78,7 @@ def sumpodLoader(event_index, all_event_indices):
         
 # Note, use RQ list 3 for visualization
 
-def pulseViewer(event_index, pulse_index, start_rqs, end_rqs, all_event_indices, all_pulse_indices):
+def pulseViewer(event_index, pulse_index, start_rqs, end_rqs, all_event_indices, all_pulse_indices, time_since, time_until):
     
     sumpod_viz = sumpodLoader(event_index, all_event_indices)
     
@@ -89,8 +89,8 @@ def pulseViewer(event_index, pulse_index, start_rqs, end_rqs, all_event_indices,
 
     print(len(sumpod_viz))
     
-    event_start = -len(sumpod_viz)/2
-    event_end = len(sumpod_viz)/2
+    event_start = time_since[rq_index]
+    event_end = time_until[rq_index]
     samples = np.linspace(event_start,event_end,len(sumpod_viz))
     
     pulse_start = start_rqs[rq_index]
@@ -104,7 +104,7 @@ def pulseViewer(event_index, pulse_index, start_rqs, end_rqs, all_event_indices,
     plt.ylim((0,100));
 
 
-    print(pulse_start, pulse_end)   
+    print(pulse_start, pulse_end, print(event_start), print(event_end))   
 
     return None
 
@@ -116,7 +116,7 @@ def pulseViewer(event_index, pulse_index, start_rqs, end_rqs, all_event_indices,
 
 # Run the visualization
 
-pulseViewer(4,6,test_rqs_5[:,1], test_rqs_5[:,0],test_event_index_5[0:1000], test_order_index_5[0:1000])
+pulseViewer(4,6,test_rqs_5[:,1], test_rqs_5[:,0],test_event_index_5[0:1000], test_order_index_5[0:1000],time_since_5[0:1000],time_until_5[0:1000])
 
 #%%
 
