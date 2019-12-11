@@ -62,7 +62,6 @@ def pca_analyze(model, lpc_known_RQs, lpc_unknown_RQs, labels_to_plot, lpc_known
     lpc_unknown_event_index = np.delete(arr=lpc_unknown_event_index, obj=del_pulse_index, axis=0)
     lpc_unknown_order_index = np.delete(arr=lpc_unknown_order_index, obj=del_pulse_index, axis=0)
 
-
     return lpc_known_embeddings, lpc_unknown_embeddings, pca_known, pca_unknown, lpc_known_labels, lpc_unknown_labels
 
 
@@ -97,13 +96,13 @@ def pca_plot_subset(lpc_known_embeddings, lpc_unknown_embeddings, lpc_known_labe
     # Find ranges that encompass most of the data (no skewing for massive outliers)
     low_p = 0.5
     high_p = 99.5
-    margin_factor = 0.2
+    margin_factor = 0.25
     x_min = np.percentile(x_vec, low_p) - margin_factor * (np.percentile(x_vec, high_p) - np.percentile(x_vec, low_p))
     x_max = np.percentile(x_vec, high_p) + margin_factor * (np.percentile(x_vec, high_p) - np.percentile(x_vec, low_p))
     y_min = np.percentile(y_vec, low_p) - margin_factor * (np.percentile(y_vec, high_p) - np.percentile(y_vec, low_p))
     y_max = np.percentile(y_vec, high_p) + margin_factor * (np.percentile(y_vec, high_p) - np.percentile(y_vec, low_p))
 
-    plt_rq_names = ['S1', 'S2', 'Single Photoelectron', 'Single Electron']
+    plt_rq_names = ['S1', 'S2', 'single phe', 'single electron']
     plt_rq_abbrev = ['s1', 's2', 'sphe', 'se']
 
     plt.ion()
@@ -111,7 +110,7 @@ def pca_plot_subset(lpc_known_embeddings, lpc_unknown_embeddings, lpc_known_labe
     # fig, axs = plt.subplots(1, 1, figsize=(18, 16))
 
     for i in labels_to_plot:
-        fig = plt.figure(i + 1, figsize=(18, 16))
+        fig = plt.figure(i + 1, figsize=(21.5, 16))
 
         # Plot the lpc-known examples of this class:
         cutoff = len(lpc_known_labels)
@@ -124,13 +123,18 @@ def pca_plot_subset(lpc_known_embeddings, lpc_unknown_embeddings, lpc_known_labe
 
 
         plt.clf()
-        plt.scatter(x_vec, y_vec, c='gray', s=1)  # Plot all pulses
-        plt.scatter(x_known, y_known, c='b', s=1)  # Plot LPC-known pulses
-        plt.scatter(x_unknown, y_unknown, c='r', s=1, alpha=1)  # Plot LPC-unknown pulses
+        if len(labels_to_plot)>1:
+            plt.scatter(x_vec, y_vec, c='gray', s=2.5, label='All pulses')  # Plot all pulses
+        plt.scatter(x_known, y_known, c='b', s=6, label='LPC-classified pulses')  # Plot LPC-known pulses
+        plt.scatter(x_unknown, y_unknown, c='r', s=6, label='LPC-unclassified pulses', alpha=1)  # Plot LPC-unknown pulses
 
-        plt.title('2D embedding projection for LPC-classified (blue) and LPC-unclassified (red) ' + plt_rq_names[i] + ' pulses')
         plt.xlim(x_min, x_max)
         plt.ylim(y_min, y_max)
+
+        plt.title('2D embedding PCA projection for LPC-classified and unclassified ' + plt_rq_names[i] + ' pulses', fontsize=24)
+        plt.xlabel('Principal Axis 1', fontsize=18)
+        plt.ylabel('Princial Axis 2', fontsize=18)
+        plt.legend(fontsize=18, loc=1)
 
         plt.show()
         if save_figs:
@@ -169,15 +173,30 @@ def K_Nearest_Neighbor(known_points, labels, unknown_points, pulse_species, save
     NN_0 = unknown_points[NN_class == 0]
     NN_1 = unknown_points[NN_class == 1]
 
-    
     # Plot also the training points
-    fig = plt.figure()#figsize=(18, 16))
+    fig = plt.figure(figsize=(21.5, 16))
     
-    plt.scatter(known_points[:, 0], known_points[:, 1], color = 'blue', s = 5, label = "deepLPC")
-    plt.scatter(NN_0[:,0], NN_0[:,1], color = 'black', edgecolors = 'black', s = 5, label = "5s (Inliers)")
-    plt.scatter(NN_1[:, 0], NN_1[:, 1], color = 'red', s = 5, label = "5s (Outliers)")
-    plt.legend()
-    plt.title('Nearest Neighbor Classification for %s pulses'%pulse_species)
+    plt.scatter(known_points[:, 0], known_points[:, 1], color='gray', s=2.5, label="deepLPC")
+    plt.scatter(NN_0[:, 0], NN_0[:, 1], color='blue', edgecolors='blue', s=6, label="5s (Inliers)")
+    plt.scatter(NN_1[:, 0], NN_1[:, 1], color='red', s=6, label="5s (Outliers)")
+
+    # Find plot ranges that encompass most of the data (no skewing for massive outliers)
+    low_p = 0.5
+    high_p = 99.5
+    margin_factor = 0.25
+    x = known_points[:,0]
+    y = known_points[:,1]
+    x_min = np.percentile(x, low_p) - margin_factor * (np.percentile(x, high_p) - np.percentile(x, low_p))
+    x_max = np.percentile(x, high_p) + margin_factor * (np.percentile(x, high_p) - np.percentile(x, low_p))
+    y_min = np.percentile(y, low_p) - margin_factor * (np.percentile(y, high_p) - np.percentile(y, low_p))
+    y_max = np.percentile(y, high_p) + margin_factor * (np.percentile(y, high_p) - np.percentile(y, low_p))
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
+
+    plt.legend(fontsize=18, loc=1)
+    plt.title('Nearest Neighbor Classification for %s pulses'%pulse_species, fontsize=24)
+    plt.xlabel('Principal Axis 1', fontsize = 18)
+    plt.ylabel('Princial Axis 2', fontsize = 18)
     plt.show()
     
     if save_figs:
@@ -188,7 +207,6 @@ def K_Nearest_Neighbor(known_points, labels, unknown_points, pulse_species, save
 
         # Decide on a name and save
         filename = str(pulse_species) + '_KNN_' + str(timestamp) + '.png'
-        fig.savefig('png/KNN' + filename)
+        fig.savefig('png/KNN/' + filename)
   
-    return   
-    
+    return

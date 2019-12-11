@@ -139,7 +139,7 @@ def train(model, inputs, labels):
     return None
 
 
-def test(model, inputs, labels, is_testing_5 = False):
+def test(model, inputs, labels, is_testing_5 = False, quiet_mode=True):
     
 
     # Initialize variables
@@ -169,25 +169,25 @@ def test(model, inputs, labels, is_testing_5 = False):
         # Store the predicted labels for the batch
         predicted_labels[start:end] = tf.reshape(tf.argmax(probabilities, axis=1), [-1, 1])
 
-        if 100 * start / inputs.shape[0] >= print_counter:
-            print_counter += print_every_x_percent  # Update print counter
-            print('{0:.0%}'.format(print_counter/100))
-            if is_testing_5:
-                prediction = np.argmax(np.array(probabilities),axis=1)
-                for i in range(model.num_classes):
-                    number_of_pulses_in_label_predicted = np.sum(prediction==i)
-                    print('Number of Label = {0:1d} predicted is : {1:1d}'.format(i,number_of_pulses_in_label_predicted)) 
+        if quiet_mode == False:
+            if 100 * start / inputs.shape[0] >= print_counter:
+                print_counter += print_every_x_percent  # Update print counter
+                print('{0:.0%}'.format(print_counter/100))
+                if is_testing_5:
+                    prediction = np.argmax(np.array(probabilities),axis=1)
+                    for i in range(model.num_classes):
+                        number_of_pulses_in_label_predicted = np.sum(prediction==i)
+                        print('Number of Label = {0:1d} predicted is : {1:1d}'.format(i,number_of_pulses_in_label_predicted))
                     
-                
-            else:
-                for i in range(model.num_classes):
-                    number_of_pulses_in_label = np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)].shape[0]
-                    number_correctly_identified = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1)==i).sum()
-                    print('Label = {0:1d}. {1:.0%} Correctly Predicted = {2:1d}/{3:1d}'.format(i,number_correctly_identified/number_of_pulses_in_label,number_correctly_identified,number_of_pulses_in_label))
+                else:
+                    for i in range(model.num_classes):
+                        number_of_pulses_in_label = np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)].shape[0]
+                        number_correctly_identified = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1)==i).sum()
+                        print('Label = {0:1d}. {1:.0%} Correctly Predicted = {2:1d}/{3:1d}'.format(i,number_correctly_identified/number_of_pulses_in_label,number_correctly_identified,number_of_pulses_in_label))
                     
-                    if number_of_pulses_in_label != number_correctly_identified:
-                        incorrect_predictions = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1))
-                        print('\t Label =',i,'\n \t Labels:',incorrect_predictions[incorrect_predictions!=i])
+                        if number_of_pulses_in_label != number_correctly_identified:
+                            incorrect_predictions = (np.argmax(np.array(probabilities)[np.where(np.array(tf.reshape(batch_labels,[-1])) == i)],axis=1))
+                            print('\t Label =',i,'\n \t Labels:',incorrect_predictions[incorrect_predictions!=i])
 
 
     loss /= batch_counter
@@ -216,11 +216,11 @@ def main():
     # %%
 
     # Parameters for the run
-    dataset_switch = 2 # Use 2 for standard Kr dataset.
+    dataset_switch = 3 # Use 2 for standard Kr dataset.
     RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
-    epochs = 2 # num of times during training to loop over all data for an independent training trial.
-    num_trials = 4  # Number of independent training/testing runs (trials) to perform
+    epochs = 10 # num of times during training to loop over all data for an independent training trial.
+    num_trials = 1  # Number of independent training/testing runs (trials) to perform
     save_figs = True
     disp_figs = False
     label_list = ('S1','S2','SPE','SE')
@@ -281,16 +281,6 @@ def main():
                   'pulse_classification',  # To be used as labels
                   'pulse_start_samples']  # To be used for pulse ordering (for identifying pulses in traces)
 
-    #    # Create some variables for ease of broad event classification and population checking.
-    #    pulse_classification = rq[0].pulse_classification
-    #    num_pulses = np.sum(pulse_classification > 0, axis=0)
-    #    num_S1s = np.sum(pulse_classification == 1,axis=0)
-    #    num_S2s = np.sum(pulse_classification == 2,axis=0)
-    #    num_se = np.sum(pulse_classification == 3, axis=0)
-    #    num_sphe = np.sum(pulse_classification == 4, axis=0)
-    #    rqs, labels, pulse_event_index  = get_data(dataset_list, fields)
-
-    
     trial_test_acc = []
     trial_test_acc_5 = []
     for trial_index in range(num_trials):
@@ -315,27 +305,29 @@ def main():
 
         # Test distribution of LPC-unclassified pulses
         print('Testing LPC-unclassified pulses:')
-        test_acc_5 = test(model, test_rqs_5, test_labels_5, is_testing_5 = True)
+        test_acc_5 = test(model, test_rqs_5, test_labels_5, is_testing_5=True, quiet_mode=True)
         trial_test_acc_5.append(test_acc_5)
 
-        # Use PCA to visualize clustering populations for the LPC-unclassified pulses
-        labels_to_plot = int(np.array([trial_index]))
-        lpc_known_embeddings, lpc_unknown_embeddings, pca_known, pca_unknown, lpc_known_labels, lpc_unknown_labels = pca_analyze(model, test_rqs, test_rqs_5, labels_to_plot, test_event_index, test_event_index_5, test_order_index, test_order_index_5, save_figs=save_figs, disp_figs=disp_figs)
+        for pulse_type_index in range(4):
+            # Use PCA to visualize clustering populations for the LPC-unclassified pulses
+            labels_to_plot = pulse_type_index
+            lpc_known_embeddings, lpc_unknown_embeddings, pca_known, pca_unknown, lpc_known_labels, lpc_unknown_labels = pca_analyze(model, test_rqs, test_rqs_5, labels_to_plot, test_event_index, test_event_index_5, test_order_index, test_order_index_5, save_figs=save_figs, disp_figs=disp_figs)
     
-        # Create a "train" set, including labels, for the nearest neighbor algorithm
-        # Here, 0's are considered inliers, 1's are considered outliers
-        KNN_train = np.concatenate((pca_known, pca_unknown))
-        KNN_labels = np.concatenate((np.zeros(len(pca_known)), np.ones(len(pca_unknown))))
+            # Create a "train" set, including labels, for the nearest neighbor algorithm
+            # Here, 0's are considered inliers, 1's are considered outliers
+            KNN_train = np.concatenate((pca_known, pca_unknown))
+            KNN_labels = np.concatenate((np.zeros(len(pca_known)), np.ones(len(pca_unknown))))
         
-        K_Nearest_Neighbor(KNN_train, KNN_labels, pca_unknown, label_list[labels_to_plot])
-        
+            K_Nearest_Neighbor(KNN_train, KNN_labels, pca_unknown, label_list[labels_to_plot])
+
     # Summarize the num_trials independent trials with a list of final testing accuracies
-    print('\n%i independent training trials complete. Final testing accuracies:' % num_trials)
-    print(*np.array(trial_test_acc), sep='  ')
-    print('Mean testing accuracy over all trials: %0.2f +/- %0.2f' % (np.average(trial_test_acc), np.std(trial_test_acc) ) )
-
+    if num_trials>1:
+        print('\n%i independent training trials complete. Final testing accuracies:' % num_trials)
+        print(*np.array(trial_test_acc), sep='  ')
+        print('Mean testing accuracy over all trials: %0.2f +/- %0.2f' % (np.average(trial_test_acc), np.std(trial_test_acc) ) )
+    else:
+        print('Training complete.')
     
     
-
 if __name__ == '__main__':
     main()
