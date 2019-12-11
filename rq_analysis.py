@@ -53,19 +53,36 @@ train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_in
 
 #%%
 
-sumpod_data_small = './data/sumpods_small.npy'
-sumpod_data_big = './data/sumpods_big.npy'
-sumpods = np.load(sumpod_data_small, allow_pickle = True)
 
-sumpodIndex_small = list(np.load('./data/events_forsumpods_small.npy', allow_pickle = True))
-sumpodIndex_big = list(np.load('./data/events_forsumpods_big.npy', allow_pickle = True))
-
-
-#%%
+def sumpodLoader(event_index):
+    sumpod_viz = [0]
+    
+    sumpodIndex_small = list(np.load('./data/sumpods/events_forsumpods_small.npy', allow_pickle = True))
+    sumpodIndex_big = list(np.load('./data/sumpods/events_forsumpods_big_sliced.npy', allow_pickle = True))
+    
+    if len(set(sumpodIndex_small).intersection(set([event_index]))) > 0: 
+        filename = './data/sumpods/sumpods_small.npy'
+        print('Loading sumpods from: '+filename)
+        sumpod = np.load(filename, allow_pickle = True)
+        sumpod_viz = sumpod[sumpodIndex_small.index(event_index)]
+    else:   
+        for i in range(len(sumpodIndex_big)):     
+            if len(set(sumpodIndex_big[i]).intersection(set([event_index]))) > 0:
+                print('Loading sumpod from: ./data/sumpods/sumpods%s.npy'%(i+1))
+                sumpod = np.load('./data/sumpods/sumpods%s.npy'%(i+1), allow_pickle = True)
+                sumpod_viz = sumpod[sumpodIndex_big[i].index(event_index)]
+                break
+                
+    if len(sumpod_viz) == 1:
+        print('No Sumpod Exists for that event_index. Try again!')
+    
+    return sumpod_viz
+        
 # Note, use RQ list 3 for visualization
 
 def pulseViewer(event_index, pulse_index):
-    sumpod_viz = sumpods[sumpodIndex_small.index(event_index)]
+    
+    sumpod_viz = sumpodLoader(event_index)
     
     pulse_start = rq.pulse_start_samples[:,event_index][pulse_index]
     pulse_end = rq.pulse_end_samples[:,event_index][pulse_index]
@@ -84,15 +101,15 @@ def pulseViewer(event_index, pulse_index):
 
     return None
 
-# Choose an event and a pulse index [0,9] that you'd like to view
-viable_event_index = list(set(sumpodIndex_small).intersection(test_event_index_5))
-event_index = viable_event_index[2]
-pulse_index = int(test_order_index_5[0])
+# # Choose an event and a pulse index [0,9] that you'd like to view
+# viable_event_index = list(set(sumpodIndex_small).intersection(test_event_index_5))
+# event_index = viable_event_index[2]
+# pulse_index = int(test_order_index_5[0])
 
 
-# Run the visualization
+# # Run the visualization
 
-pulseViewer(event_index,pulse_index)
+# pulseViewer(event_index,pulse_index)
 
 #%%
 
