@@ -80,6 +80,11 @@ def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
     # This will be cut down in the same way as the empty pulses to give a unique index per pulse to
     # each event. This can be used later to re-associate pulses from an event together.
     pulse_event_index = np.repeat(range(num_events), 10)
+    try:
+        time_since = np.repeat(rq.time_since_livetime_start_samples,10)
+        time_until = np.repeat(rq.time_until_livetime_end_samples,10)
+    except:
+        pass
 
     # Get pulse_rqs and pulse_event_index for unidentified pulses (label = 5)
     # This will be used to test how our network classifies these pulses
@@ -89,6 +94,8 @@ def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
     test_rqs_5 = pulse_rqs[cut_label_5_indices]
     test_event_index_5 = pulse_event_index[cut_label_5_indices]
     test_order_index_5 = pulse_order_index[cut_label_5_indices]
+    time_since_5 = time_since[cut_label_5_indices]
+    time_until_5 = time_until[cut_label_5_indices]
 
     # Delete those pulse_rq colums, labels, and event indexes where the pulse was empty
     pulse_rqs = np.delete(arr=pulse_rqs, obj=empty_pulse_index, axis=0)
@@ -126,5 +133,5 @@ def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
 
 
     print('Pulse RQ data block pre-processed')
-    return train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_label_5, test_rqs_5, test_event_index_5, test_order_index_5, pulse_rq_list,rq
+    return train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_label_5, test_rqs_5, test_event_index_5, test_order_index_5, pulse_rq_list,time_since_5, time_until_5
 

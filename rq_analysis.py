@@ -42,59 +42,66 @@ elif RQ_list_switch == 3:
               'pulse_start_samples',
               # 'pulse_length_samples',
               'pulse_end_samples',
+              'time_since_livetime_start_samples',
+              'time_until_livetime_end_samples',
               'aft_t1_samples',  # OG LPC
               'file_number',  # OG LPC
               'pulse_classification',
               ]
 use_these_classifiers = (1, 2, 3, 4)
 
-train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_label_5, test_rqs_5, test_event_index_5, test_order_index_5, pulse_rq_list,rq = get_data(dataset_list, fields, use_these_classifiers)
+train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_label_5, test_rqs_5, test_event_index_5, test_order_index_5, pulse_rq_list,time_since_5, time_until_5 = get_data(dataset_list, fields, use_these_classifiers)
 
 
 #%%
 
 
-def sumpodLoader(event_index):
-    sumpod_viz = [0]
+def sumpodLoader(event_index, all_event_indices):
     
-    sumpodIndex_small = list(np.load('./data/sumpods/events_forsumpods_small.npy', allow_pickle = True))
-    sumpodIndex_big = list(np.load('./data/sumpods/events_forsumpods_big_sliced.npy', allow_pickle = True))
+    sumpods = []
     
-    if len(set(sumpodIndex_small).intersection(set([event_index]))) > 0: 
-        filename = './data/sumpods/sumpods_small.npy'
-        print('Loading sumpods from: '+filename)
-        sumpod = np.load(filename, allow_pickle = True)
-        sumpod_viz = sumpod[sumpodIndex_small.index(event_index)]
-    else:   
-        for i in range(len(sumpodIndex_big)):     
-            if len(set(sumpodIndex_big[i]).intersection(set([event_index]))) > 0:
-                print('Loading sumpod from: ./data/sumpods/sumpods%s.npy'%(i+1))
-                sumpod = np.load('./data/sumpods/sumpods%s.npy'%(i+1), allow_pickle = True)
-                sumpod_viz = sumpod[sumpodIndex_big[i].index(event_index)]
-                break
-                
-    if len(sumpod_viz) == 1:
+    filename = './data/sumpods/sumpods5_0_1000.npy'
+    print('Loading sumpods from: '+filename)
+    all_sumpods = np.load(filename, allow_pickle = True)
+    
+    if type(event_index)==int:
+        sumpods = all_sumpods[list(all_event_indices).index(event_index)]
+    else: 
+        for e_i in np.array(event_index):
+            sumpods += [all_sumpods[list(all_event_indices).index(e_i)]]
+    
+    
+    if len(sumpods) == 0:
         print('No Sumpod Exists for that event_index. Try again!')
     
-    return sumpod_viz
+    return sumpods
         
 # Note, use RQ list 3 for visualization
 
-def pulseViewer(event_index, pulse_index):
+def pulseViewer(event_index, pulse_index, start_rqs, end_rqs, all_event_indices, all_pulse_indices):
     
-    sumpod_viz = sumpodLoader(event_index)
+    sumpod_viz = sumpodLoader(event_index, all_event_indices)
     
-    pulse_start = rq.pulse_start_samples[:,event_index][pulse_index]
-    pulse_end = rq.pulse_end_samples[:,event_index][pulse_index]
-    samples = np.linspace(-50000,50000,len(sumpod_viz))
+    for i in range(len(all_event_indices)):
+        if all_event_indices[i] == event_index and all_pulse_indices[i] == pulse_index:
+            rq_index = i
+            break
+
+    print(len(sumpod_viz))
     
+    event_start = -len(sumpod_viz)/2
+    event_end = len(sumpod_viz)/2
+    samples = np.linspace(event_start,event_end,len(sumpod_viz))
+    
+    pulse_start = start_rqs[rq_index]
+    pulse_end = end_rqs[rq_index]
     total_time = pulse_end - pulse_start
-    buffer = 1 * total_time
+    buffer = 20 * total_time
     
     
     plt.plot(samples,sumpod_viz)
     plt.xlim((pulse_start-buffer, pulse_end+buffer));
-    plt.ylim((0,10));
+    plt.ylim((0,100));
 
 
     print(pulse_start, pulse_end)   
@@ -107,32 +114,33 @@ def pulseViewer(event_index, pulse_index):
 # pulse_index = int(test_order_index_5[0])
 
 
-# # Run the visualization
+# Run the visualization
 
-# pulseViewer(event_index,pulse_index)
+pulseViewer(4,6,test_rqs_5[:,1], test_rqs_5[:,0],test_event_index_5[0:1000], test_order_index_5[0:1000])
 
 #%%
 
-# Currently nonsense
-
-
-# class1 = [True if x == 1 else False for x in train_labels]
-# class2 = [True if x == 2 else False for x in train_labels]
-# class3 = [True if x == 3 else False for x in train_labels]
-# class4 = [True if x == 4 else False for x in train_labels]
-
-# print(rq_list)
-
-# for i in range(np.shape(train_rqs)[1]):
-#     print('Max: %2.1f Mean:%2.1f Median:%2.1f'%(max(train_rqs[:,i][class1]), np.mean(train_rqs[:,i][class1]), np.median(train_rqs[:,i][class1])))
-#     plt.hist(train_rqs[:,i][class1], bins = 30, histtype = 'step',label = 'S1')
-#     print('Max: %2.1f Mean:%2.1f Median:%2.1f'%(max(train_rqs[:,i][class2]), np.mean(train_rqs[:,i][class2]), np.median(train_rqs[:,i][class2])))
-#     plt.hist(train_rqs[:,i][class2], bins = 30, histtype = 'step',label = 'S2')
-#     print('Max: %2.1f Mean:%2.1f Median:%2.1f'%(max(train_rqs[:,i][class3]), np.mean(train_rqs[:,i][class3]), np.median(train_rqs[:,i][class3])))
-#     plt.hist(train_rqs[:,i][class3], bins = 30, histtype = 'step',label = 'SPE')
-#     print('Max: %2.1f Mean:%2.1f Median:%2.1f'%(max(train_rqs[:,i][class4]), np.mean(train_rqs[:,i][class4]), np.median(train_rqs[:,i][class4])))
-#     plt.hist(train_rqs[:,i][class4], bins = 30, histtype = 'step',label = 'SE')
-#     plt.xlabel('%s'%rq_list[i])
-#     plt.yscale('linear')
-#     plt.legend()
-#     plt.show()
+# DEPRECATED
+# def sumpodLoader(event_index):
+#     sumpod_viz = [0]
+    
+#     sumpodIndex_small = list(np.load('./data/sumpods/events_forsumpods_small.npy', allow_pickle = True))
+#     sumpodIndex_big = list(np.load('./data/sumpods/events_forsumpods_big_sliced.npy', allow_pickle = True))
+    
+#     if len(set(sumpodIndex_small).intersection(set([event_index]))) > 0: 
+#         filename = './data/sumpods/sumpods_small.npy'
+#         print('Loading sumpods from: '+filename)
+#         sumpod = np.load(filename, allow_pickle = True)
+#         sumpod_viz = sumpod[sumpodIndex_small.index(event_index)]
+#     else:   
+#         for i in range(len(sumpodIndex_big)):     
+#             if len(set(sumpodIndex_big[i]).intersection(set([event_index]))) > 0:
+#                 print('Loading sumpod from: ./data/sumpods/sumpods%s.npy'%(i+1))
+#                 sumpod = np.load('./data/sumpods/sumpods%s.npy'%(i+1), allow_pickle = True)
+#                 sumpod_viz = sumpod[sumpodIndex_big[i].index(event_index)]
+#                 break
+                
+#     if len(sumpod_viz) == 1:
+#         print('No Sumpod Exists for that event_index. Try again!')
+    
+#     return sumpod_viz
