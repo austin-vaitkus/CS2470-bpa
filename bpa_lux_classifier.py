@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from preprocess import get_data
-from pca_analysis import pca_analyze
+from pca_analysis import pca_analyze, K_Nearest_Neighbor
 
 
 class Model(tf.keras.Model):
@@ -220,9 +220,10 @@ def main():
     RQ_list_switch = 1 # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4) # Net will ONLY train on the listed LPC classes.
     epochs = 2 # num of times during training to loop over all data for an independent training trial.
-    num_trials = 1  # Number of independent training/testing runs (trials) to perform
+    num_trials = 4  # Number of independent training/testing runs (trials) to perform
     save_figs = True
     disp_figs = False
+    label_list = ('S1','S2','SPE','SE')
    
     # Select the dataset to use
     if dataset_switch == 0:
@@ -289,6 +290,7 @@ def main():
     #    num_sphe = np.sum(pulse_classification == 4, axis=0)
     #    rqs, labels, pulse_event_index  = get_data(dataset_list, fields)
 
+    
     trial_test_acc = []
     trial_test_acc_5 = []
     for trial_index in range(num_trials):
@@ -317,15 +319,23 @@ def main():
         trial_test_acc_5.append(test_acc_5)
 
         # Use PCA to visualize clustering populations for the LPC-unclassified pulses
-        labels_to_plot = np.array([0,1,2,3])
+        labels_to_plot = int(np.array([trial_index]))
         lpc_known_embeddings, lpc_unknown_embeddings, pca_known, pca_unknown, lpc_known_labels, lpc_unknown_labels = pca_analyze(model, test_rqs, test_rqs_5, labels_to_plot, test_event_index, test_event_index_5, test_order_index, test_order_index_5, save_figs=save_figs, disp_figs=disp_figs)
-
-
+    
+        # Create a "train" set, including labels, for the nearest neighbor algorithm
+        # Here, 0's are considered inliers, 1's are considered outliers
+        KNN_train = np.concatenate((pca_known, pca_unknown))
+        KNN_labels = np.concatenate((np.zeros(len(pca_known)), np.ones(len(pca_unknown))))
+        
+        K_Nearest_Neighbor(KNN_train, KNN_labels, pca_unknown, label_list[labels_to_plot])
+        
     # Summarize the num_trials independent trials with a list of final testing accuracies
     print('\n%i independent training trials complete. Final testing accuracies:' % num_trials)
     print(*np.array(trial_test_acc), sep='  ')
     print('Mean testing accuracy over all trials: %0.2f +/- %0.2f' % (np.average(trial_test_acc), np.std(trial_test_acc) ) )
 
+    
+    
 
 if __name__ == '__main__':
     main()

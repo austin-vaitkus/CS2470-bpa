@@ -6,6 +6,9 @@ import numpy as np
 import tensorflow as tf
 from sklearn.decomposition import PCA
 
+from sklearn import neighbors
+from matplotlib.colors import ListedColormap
+
 
 def pca_analyze(model, lpc_known_RQs, lpc_unknown_RQs, labels_to_plot, lpc_known_event_index, lpc_unknown_event_index, lpc_known_order_index, lpc_unknown_order_index, save_figs=True, disp_figs=False):
     """
@@ -150,3 +153,62 @@ def pca_plot_subset(lpc_known_embeddings, lpc_unknown_embeddings, lpc_known_labe
     pca_unknown = vectors[cutoff:,:]
     return pca_known, pca_unknown
 
+
+def K_Nearest_Neighbor(known_points, labels, unknown_points, pulse_species, save_figs = True):
+    
+    # Set the number of neighbors to compare to
+    n_neighbors = 5
+    
+    # Create an instance of Neighbours Classifier and fit the known data
+    NNfunc = neighbors.KNeighborsClassifier(n_neighbors, weights = 'uniform')
+    NNfunc.fit(known_points, labels)
+    
+    # Using the "trained" Neighbor classifier, predict the class of the 5's
+    NN_class = NNfunc.predict(unknown_points)
+  
+    NN_0 = unknown_points[NN_class == 0]
+    NN_1 = unknown_points[NN_class == 1]
+
+    
+    # Plot also the training points
+    fig = plt.figure()#figsize=(18, 16))
+    
+    plt.scatter(known_points[:, 0], known_points[:, 1], color = 'blue', s = 5, label = "deepLPC")
+    plt.scatter(NN_0[:,0], NN_0[:,1], color = 'black', edgecolors = 'black', s = 5, label = "5s (Inliers)")
+    plt.scatter(NN_1[:, 0], NN_1[:, 1], color = 'red', s = 5, label = "5s (Outliers)")
+    plt.legend()
+    plt.title('Nearest Neighbor Classification for %s pulses'%pulse_species)
+    plt.show()
+    
+    if save_figs:
+        now = time.localtime()
+        timestamp = int(1E8 * (now.tm_year - 2000) + 1E6 * now.tm_mon + 1E4 * now.tm_mday + 1E2 * now.tm_hour + now.tm_min)
+        if not os.path.exists('png/KNN/'):
+            os.mkdir('png/KNN/')
+
+        # Decide on a name and save
+        filename = str(pulse_species) + '_KNN_' + str(timestamp) + '.png'
+        fig.savefig('png/KNN' + filename)
+  
+    return   
+    
+    
+    
+  #%%
+
+
+    # # Plot the decision boundary. For that, we will assign a color to each
+    # # point in the mesh [x_min, x_max]x[y_min, y_max].    
+    # h = .02  # step size in the mesh
+    # x_min, x_max = known_points[:, 0].min() - 1, known_points[:, 0].max() + 1
+    # y_min, y_max = known_points[:, 1].min() - 1, known_points[:, 1].max() + 1
+    # xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+    #                      np.arange(y_min, y_max, h))
+    # Z = NNfunc.predict(np.c_[xx.ravel(), yy.ravel()])
+
+
+    # # Put the result into a color plot
+    # Z = Z.reshape(xx.shape)
+    
+    # plt.figure()
+    # plt.pcolormesh(xx, yy, Z, cmap='cmap_light')  
