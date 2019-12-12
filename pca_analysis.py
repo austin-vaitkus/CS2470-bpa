@@ -278,9 +278,9 @@ def cutSelection(xs, ys):
     
     c,nc = polyPath(polypath,xs,ys)
 #%%
-xs = np.random.uniform(0,1,1000)
-ys = np.random.uniform(0,1,1000)
-cutSelection(xs, ys)
+#xs = np.random.uniform(0,1,1000)
+#ys = np.random.uniform(0,1,1000)
+#cutSelection(xs, ys)
 
 
  

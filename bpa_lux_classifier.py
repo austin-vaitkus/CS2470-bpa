@@ -215,7 +215,7 @@ def main():
     # %%
 
     # Parameters for the run
-    dataset_switch = 2 # Use 2 for standard Kr dataset.
+    dataset_switch = 3 # Use 2 for standard Kr dataset.
     RQ_list_switch = 1  # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4)  # Net will ONLY train on the listed LPC classes.
     epochs = 10  # num of times during training to loop over all data for an independent training trial.
@@ -306,7 +306,7 @@ def main():
     for trial_index in range(num_trials):
 
         # Load and preprocess the data
-        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_labels_5, test_rqs_5, test_event_index_5, test_order_index_5, _, _ = get_data(dataset_list, fields, use_these_classifiers)
+        train_rqs, train_labels, train_event_index, test_rqs, test_labels, test_event_index, test_order_index, test_labels_5, test_rqs_5, test_event_index_5, test_order_index_5, _ = get_data(dataset_list, fields, use_these_classifiers)
 
         # Define model
         num_classes = len(use_these_classifiers)
@@ -398,9 +398,9 @@ def main():
         # Use net embeddings of test data to analyze 2D PCA.
         for pulse_type_index in range(4):
             # Use PCA to visualize clustering populations for the LPC-unclassified pulses
-            labels_to_plot = pulse_type_index
+            labels_to_plot = np.array([0,1,2,3])
             lpc_known_embeddings, lpc_unknown_embeddings, pca_known, pca_unknown, lpc_known_labels, lpc_unknown_labels = pca_analyze(model, test_rqs, test_rqs_5, labels_to_plot, test_event_index, test_event_index_5, test_order_index, test_order_index_5, save_figs=save_figs, disp_figs=disp_figs)
-    
+
             # Create a "train" set, including labels, for the nearest neighbor algorithm
             # Here, 0's are considered inliers, 1's are considered outliers
             print('Beginning KNN analysis...')
