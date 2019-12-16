@@ -27,7 +27,7 @@ def get_data(dataset_list, fields, use_these_classifiers, phase = 0.0075):
     # Break apart events into pulses, then compile these into a list while assigning them an event index for later association when we look at event structures.
     test_set_fraction = 0.1
     rq_norm_mode = 0 #  Set to 0 for no normalization of RQs, 1 for normalization by the 80th percentile largest value, and 2 for normalization via the abs(maximum value)
-    rq_tanh_norm = 0 #  Set to 0 for no RQ scaling, 1 for RQ = tanh(RQ), 2 for both!
+    rq_tanh_norm = 1 #  Set to 0 for no RQ scaling, 1 for RQ = tanh(RQ), 2 for both!
     num_pulses_per_event = 10
 
     num_events = rq['pulse_classification'].shape[1]

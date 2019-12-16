@@ -28,8 +28,6 @@ class Model(tf.keras.Model):
         self.strides = 1
 
         # Model Layers
-#        self.conv1 = tf.keras.layers.Conv1D(self.num_filters, self.kernel_size, self.strides, padding='SAME', activation='relu')
-        
         self.dense1 = tf.keras.layers.Dense(self.num_classes * 4, dtype=tf.float32, name='dense1')
         self.BN1 = tf.keras.layers.BatchNormalization(trainable = False)
         self.dense2 = tf.keras.layers.Dense(self.num_classes * 3, dtype=tf.float32, name='dense2')
@@ -215,7 +213,7 @@ def main():
     # %%
 
     # Parameters for the run
-    dataset_switch = 3 # Use 2 for standard Kr dataset.
+    dataset_switch = 2 # Use 2 for standard Kr dataset.
     RQ_list_switch = 1  # Use 1 to train on basic RQs, 2 for all available relevant RQs
     use_these_classifiers = (1, 2, 3, 4)  # Net will ONLY train on the listed LPC classes.
     epochs = 10  # num of times during training to loop over all data for an independent training trial.
@@ -226,15 +224,15 @@ def main():
     save_model = True
     save_test_set = True
 
-    disp_figs = False
+    disp_figs = True
 
     saved_trained_model_basename = 'Standard'
-    load_trained_model = True
+    load_trained_model = False
     #model_to_load = 'Standard_cp25541_330M_2epochs'
     model_to_load = 'Standard_cp25541_2.4G_10epochs'
 
     # Enabling the below option to True OVERRIDES THE LOADED DATASET with the test data the model was trained on.
-    load_model_test_set = True
+    load_model_test_set = False
     #model_test_set_to_load = 'Standard_cp25541_330M_2epochs'
     model_test_set_to_load = 'Standard_cp25541_2.4G_10epochs'
 
@@ -406,7 +404,7 @@ def main():
             print('Beginning KNN analysis...')
             KNN_train = np.concatenate((pca_known, pca_unknown))
             KNN_labels = np.concatenate((np.zeros(len(pca_known)), np.ones(len(pca_unknown))))
-            K_Nearest_Neighbor(KNN_train, KNN_labels, pca_unknown, label_list[labels_to_plot])
+            K_Nearest_Neighbor(KNN_train, KNN_labels, pca_unknown, label_list[pulse_type_index])
             print('KNN analysis complete.')
 
     # Summarize the num_trials independent trials with a list of final testing accuracies
